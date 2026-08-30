@@ -7,7 +7,7 @@ export async function GET(context) {
 
   return rss({
     title: 'congtc - Blog công nghệ thông tin',
-    description: 'Blog chia sẻ kiến thức về lập trình, DevOps, hệ thống, và công nghệ thông tin.',
+    description: 'BlBlog chia sẻ kiến thức về lập trình, AI.',
     site: context.site,
     items: sortedPosts.map(post => ({
       title: post.data.title,
