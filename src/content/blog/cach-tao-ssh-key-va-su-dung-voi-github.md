@@ -1,7 +1,7 @@
 ---
 title: "Cách tạo SSH key và sử dụng nó với GitHub"
 description: "Hướng dẫn chi tiết cách tạo SSH key, thêm vào GitHub và sử dụng SSH để clone, push code an toàn hơn khi làm việc với Git."
-pubDate: 2026-08-30
+pubDate: 2026-06-30
 tags: ["git", "github", "ssh", "security", "devops"]
 ---
 

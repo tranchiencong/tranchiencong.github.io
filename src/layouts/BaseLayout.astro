@@ -1,7 +1,7 @@
 ---
-import '../styles/global.css';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
+import "../styles/global.css";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
 
 export interface Props {
   title: string;
@@ -9,22 +9,22 @@ export interface Props {
   ogImage?: string;
   pubDate?: Date;
   tags?: string[];
-  maxWidth?: 'max-w-3xl' | 'max-w-4xl' | 'max-w-5xl';
+  maxWidth?: "max-w-3xl" | "max-w-4xl" | "max-w-5xl";
 }
 
 const {
   title,
-  description = 'Blog chia sẻ kiến thức về Công nghệ thông tin — tranchiencong',
+  description = "Blog chia sẻ kiến thức về Công nghệ thông tin — congtc",
   ogImage,
   pubDate,
   tags = [],
-  maxWidth = 'max-w-3xl',
+  maxWidth = "max-w-3xl",
 } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const ogImageURL = ogImage
   ? new URL(ogImage, Astro.site).toString()
-  : new URL('/og-default.png', Astro.site).toString();
+  : new URL("/og-default.png", Astro.site).toString();
 ---
 
 <!doctype html>
@@ -40,14 +40,21 @@ const ogImageURL = ogImage
     <link rel="canonical" href={canonicalURL} />
 
     <!-- Open Graph -->
-    <meta property="og:type" content={pubDate ? 'article' : 'website'} />
+    <meta property="og:type" content={pubDate ? "article" : "website"} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:image" content={ogImageURL} />
     <meta property="og:site_name" content="congtc.cs" />
-    {pubDate && <meta property="article:published_time" content={pubDate.toISOString()} />}
-    {tags.map(tag => <meta property="article:tag" content={tag} />)}
+    {
+      pubDate && (
+        <meta
+          property="article:published_time"
+          content={pubDate.toISOString()}
+        />
+      )
+    }
+    {tags.map((tag) => <meta property="article:tag" content={tag} />)}
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -55,33 +62,46 @@ const ogImageURL = ogImage
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageURL} />
 
-    <!-- Favicon -->
+    <!-- Favicon & RSS -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <link rel="alternate" type="application/rss+xml" title="tranchiencong blog" href="/rss.xml" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="congtc.cs blog"
+      href="/rss.xml"
+    />
 
     <!-- Google Analytics 4 -->
     <!-- Replace G-XXXXXXXXXX with your GA4 Measurement ID -->
+    <!--
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
     <script is:inline>
       window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-XXXXXXXXXX');
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-XXXXXXXXXX");
     </script>
+    -->
 
     <!-- Dark mode: no flash -->
     <script is:inline>
-      const theme = localStorage.getItem('theme');
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (theme === 'dark' || (!theme && prefersDark)) {
-        document.documentElement.classList.add('dark');
+      const theme = localStorage.getItem("theme");
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      ).matches;
+      if (theme === "dark" || (!theme && prefersDark)) {
+        document.documentElement.classList.add("dark");
       }
     </script>
   </head>
   <body class="flex flex-col min-h-dvh">
     <Header />
-    <main class={`flex-1 w-full mx-auto px-4 sm:px-6 py-10 sm:py-16 ${maxWidth}`}>
+    <main
+      class={`flex-1 w-full mx-auto px-4 sm:px-6 py-10 sm:py-16 ${maxWidth}`}
+    >
       <slot />
     </main>
     <Footer />

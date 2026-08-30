@@ -1,7 +1,7 @@
 ---
 title: "Git rebase vs merge: Khi nào dùng cái nào?"
 description: "Hiểu rõ sự khác biệt giữa git rebase và git merge, và cách chọn đúng chiến lược cho từng tình huống."
-pubDate: 2026-08-28
+pubDate: 2026-07-30
 tags: ["git", "devops", "tips"]
 ---
 

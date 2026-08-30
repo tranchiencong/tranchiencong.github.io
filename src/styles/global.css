@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
+@import "katex/dist/katex.min.css";
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -153,3 +154,34 @@ body {
   font-weight: 500;
 }
 */
+
+/* ===== KATEX MATH ===== */
+/* Tùy chỉnh Block Math (công thức đứng độc lập) */
+.prose .katex-display {
+  /* Thêm nền xám nhạt rất nhẹ và viền để đóng khung công thức */
+  @apply !bg-zinc-50 dark:!bg-zinc-900 !border !border-zinc-200 dark:!border-zinc-800;
+
+  /* Căn giữa, bo góc, thêm padding cho thoáng */
+  @apply !text-center !rounded-xl !py-4 !my-6 !overflow-x-auto !block;
+
+  /* Tăng kích thước chữ lên 110% so với văn bản thường */
+  font-size: 1.1em !important;
+}
+
+/* Đảm bảo Inline Math (công thức trong hàng) không bị vỡ bố cục */
+.prose .katex {
+  font-size: 1em;
+}
+
+/* Fix lỗi Tailwind CSS làm hỏng layout của KaTeX (chữ chồng chéo, mất gạch ngang) */
+.katex,
+.katex * {
+  box-sizing: content-box !important;
+  border-color: currentColor !important;
+  line-height: normal !important;
+}
+
+/* Tăng độ đậm cho các dấu toán tử (đặc biệt là dấu trừ) để dễ nhìn hơn */
+.katex .mbin {
+  font-weight: 600 !important;
+}
