@@ -1,10 +1,12 @@
 ---
-import { getCollection } from 'astro:content';
-import BaseLayout from '../layouts/BaseLayout.astro';
-import PostCard from '../components/PostCard.astro';
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PostCard from "../components/PostCard.astro";
 
-const allPosts = await getCollection('blog', ({ data }) => !data.draft);
-const posts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const allPosts = await getCollection("blog", ({ data }) => !data.draft);
+const posts = allPosts.sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
 const recentPosts = posts.slice(0, 5);
 ---
 
@@ -14,15 +16,21 @@ const recentPosts = posts.slice(0, 5);
 >
   <!-- Hero -->
   <section class="mb-16 animate-fade-in">
-    <p class="text-xs font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-4">
+    <p
+      class="text-xs font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-4"
+    >
       Xin chào 👋
     </p>
-    <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 mb-4 leading-tight">
+    <h1
+      class="text-3xl sm:text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 mb-4 leading-tight"
+    >
       Trần Chiến Công
     </h1>
-    <p class="text-base text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-lg">
-      Blog cá nhân — nơi tôi ghi lại những gì học được về lập trình, hệ thống, DevOps và
-      mọi thứ liên quan đến công nghệ thông tin.
+    <p
+      class="text-base text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-lg"
+    >
+      Blog cá nhân — nơi mình ghi lại những gì học và làm về lập trình, AI,
+      Machine Learning, Deep Learning, NLP và Computer Vision.
     </p>
 
     <div class="flex items-center gap-3 mt-6">
@@ -47,7 +55,9 @@ const recentPosts = posts.slice(0, 5);
   <!-- Recent Posts -->
   <section class="animate-fade-in animate-delay-100">
     <div class="flex items-center justify-between mb-2">
-      <h2 class="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
+      <h2
+        class="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest"
+      >
         Bài viết gần đây
       </h2>
       <a
@@ -59,14 +69,18 @@ const recentPosts = posts.slice(0, 5);
       </a>
     </div>
 
-    {recentPosts.length > 0 ? (
-      <div>
-        {recentPosts.map(post => <PostCard post={post} />)}
-      </div>
-    ) : (
-      <p class="text-zinc-400 dark:text-zinc-500 text-sm py-8 border-t border-zinc-100 dark:border-zinc-800">
-        Chưa có bài viết nào. Hãy quay lại sau nhé!
-      </p>
-    )}
+    {
+      recentPosts.length > 0 ? (
+        <div>
+          {recentPosts.map((post) => (
+            <PostCard post={post} />
+          ))}
+        </div>
+      ) : (
+        <p class="text-zinc-400 dark:text-zinc-500 text-sm py-8 border-t border-zinc-100 dark:border-zinc-800">
+          Chưa có bài viết nào. Hãy quay lại sau nhé!
+        </p>
+      )
+    }
   </section>
 </BaseLayout>
