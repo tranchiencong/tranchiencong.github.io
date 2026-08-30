@@ -5,108 +5,133 @@ pubDate: 2026-08-30
 tags: ["git", "github", "ssh", "security", "devops"]
 ---
 
-Hôm nay mình sẽ hướng dẫn các bạn tạo SSH Key cho Github!   
+Nếu bạn đang làm việc với Git và GitHub, việc sử dụng SSH key là một trong những best practice để cải thiện quy trình làm việc. Nó giúp bạn xác thực một cách an toàn, tiện lợi và nhanh chóng hơn rất nhiều so với việc phải nhập username/password (hoặc personal access token) mỗi lần push code.
 
-## SSH là gì? 
+Trong bài viết này, mình sẽ hướng dẫn các bạn từng bước tạo SSH Key và thiết lập nó với GitHub một cách dễ hiểu nhất!
 
-Bạn sẽ có 2 key: public key và private key. Bạn sẽ gửi public key của mình cho git server của bạn. Public key có thể được đặt ở bất kỳ server nào ( ở đây là github ). Sau đó mở khóa bằng cách kết nối với máy client đã có private key. Khi cả hai đã khớp nhau, hệ thống sẽ mở khóa mà không cần mật khẩu. Ta còn có thể bảo vệ private key bằng một passphrase để tăng cường sự bảo mật. 
+---
 
-Xong ssh-agent sẽ làm tất cả những việc còn lại cho bạn. Mỗi lần bạn push, ssh-agent sẽ tự gửi kèm các thông tin chứng thực đi, github sẽ nhận diện ra bạn, và bạn không cần phải nhập mật khẩu nữa. 
+## 1. SSH Key là gì?
 
-## Sinh SSH Key 
+Về cơ bản, SSH key là một cơ chế xác thực sử dụng một **cặp khóa (key pair)**:
+- **Private key:** Được lưu trữ bảo mật trên máy tính của bạn (máy local) và tuyệt đối không chia sẻ cho bất kỳ ai.
+- **Public key:** Được upload lên các server mà bạn muốn kết nối (như GitHub, GitLab, server Linux).
 
-### Bước 1: Kiểm tra xem máy bạn có ssh key nào chưa 
+**Cách hoạt động:**
+Khi bạn thực hiện một thao tác với GitHub (như `git push`), GitHub sẽ yêu cầu chứng thực bằng public key. Trình quản lý `ssh-agent` dưới máy local của bạn sẽ dùng private key để giải mã và xác nhận. Khi hai chìa khoá khớp nhau, hệ thống sẽ mở khóa mà không cần mật khẩu.
 
-Mở cửa sổ dòng lệnh (terminal) và chạy lệnh:  
+> **Mẹo nhỏ:** Bạn có thể bảo vệ private key bằng một *passphrase* (mật khẩu phụ) để tăng cường sự bảo mật trong trường hợp máy tính bị xâm nhập.
+
+---
+
+## 2. Hướng dẫn sinh SSH Key
+
+### Bước 1: Kiểm tra xem máy bạn đã có SSH key nào chưa
+
+Mở cửa sổ dòng lệnh (Terminal/Git Bash/PowerShell) và chạy lệnh:
+
 ```bash
-$ ls -al ~/.ssh
+ls -al ~/.ssh
 ```
 
-Lệnh trên sẽ kiểm tra trong thư mục .ssh (nằm ở thư mục gốc của user bạn đang đăng nhập vào máy, Vd trên Ubuntu: /home/.ssh) có ssh key nào chưa, mặc định, các ssh key thường sẽ có dạng:  
-```bash
+Lệnh trên sẽ kiểm tra trong thư mục `.ssh` (nằm ở thư mục gốc của user bạn đang đăng nhập, ví dụ `C:\Users\username\.ssh` trên Windows hoặc `~/.ssh` trên Linux/macOS). Theo mặc định, các ssh key thường có dạng:
+
+```text
 id_rsa
 id_rsa.pub
 ```
 
-public key sẽ có đuôi .pub (id_rsa.pub), private key thì không có đuôi (id_rsa) Nếu có một cặp ssh key nào trong thư mục này (giả sử là id_rsa và id_rsa.pub), bạn có thể bỏ qua Bước 2 và chuyển thẳng sang Bước 3. 
+Trong đó, file có đuôi `.pub` là **public key**, file không có đuôi là **private key**. 
+- Nếu bạn đã có cặp key này, bạn có thể bỏ qua **Bước 2** và chuyển thẳng sang **Bước 3**.
+- Nếu chưa có, hãy tiếp tục.
 
-### Bước 2: Sinh một SSH key mới 
+### Bước 2: Sinh một SSH key mới
 
-Chạy lệnh sau trên terminal:  
+Chạy lệnh sau trên terminal:
+
 ```bash
-ssh-keygen -t rsa -b 4096 -C "email_cua_ban@example.com" 
+ssh-keygen -t rsa -b 4096 -C "email_cua_ban@example.com"
+```
+*(Bạn cũng có thể dùng `ssh-keygen -t rsa` cho ngắn gọn, nhưng khuyến khích thêm độ dài bit 4096 và email để quản lý dễ hơn).*
+
+Hệ thống sẽ hỏi bạn muốn lưu key ở đâu. Để tránh phiền phức, bạn nên nhấn **Enter** để chọn đường dẫn mặc định:
+
+```text
+Enter file in which to save the key (/root/.ssh/id_rsa): [Nhấn Enter]
 ```
 
-Để ngắn gọn hơn bạn có thể sử dụng lệnh này:  
-```bash
-ssh-keygen -t rsa
+Tiếp theo, hệ thống sẽ yêu cầu bạn nhập mật khẩu (passphrase) bảo vệ key:
+
+```text
+Enter passphrase (empty for no passphrase): [Nhập mật khẩu của bạn]
+Enter same passphrase again: [Nhập lại mật khẩu]
 ```
 
-Để tránh phiền phức sau này, mình khuyên bạn nên để các cài đặt ở mặc định, như lần này, ssh-agent hỏi bạn muốn lưu key của mình ở đâu thì bạn cứ thế mà Enter thôi:  
-```bash
-Enter file in which to save the key (/root/.ssh/id_rsa): [Press enter]
+> **Lưu ý:** Khi bạn gõ mật khẩu trên terminal, các ký tự sẽ **không** hiển thị (ngay cả dấu `*`). Đây là tính năng bảo mật bình thường, bạn cứ gõ xong và nhấn Enter. Bạn cũng có thể để trống (nhấn Enter 2 lần) nếu không muốn dùng mật khẩu phụ, nhưng việc đặt mật khẩu sẽ an toàn hơn.
+
+Sau khi hoàn tất, bạn sẽ nhận được thông báo tạo thành công kèm theo fingerprint:
+
+```text
+Your identification has been saved in /home/congtc/.ssh/id_rsa.
+Your public key has been saved in /home/congtc/.ssh/id_rsa.pub.
+The key fingerprint is:
+SHA256:UzqZZeMSpoaHrmviS6CEqtGfejnuj7008IUDRew congtc@congtc
 ```
 
-Nếu bạn muốn tạo một tên ssh-key khác thì hãy nhập đường dẫn cần lưu vào đây (Vd: /home/.ssh/id_rsa) 
+### Bước 3: Thêm key của bạn vào ssh-agent
 
-Tiếp đến thì nhập mật khẩu cho key của bạn:  
-```bash
-Enter file in which to save the key (/home/congtc/.ssh/id_rsa): [Type a passphrase]# Enter same passphrase again: [Type passphrase again]
-```
+`ssh-agent` là một trình nền giúp quản lý các SSH key của bạn trong suốt phiên làm việc.
 
-Lưu ý: mật khẩu khi bạn gõ vào nó sẽ không hiển thị mấy dấu *** như bình thường, nhưng bạn cứ gõ xong rồi Enter thôi. Thêm nữa, bạn nên chọn một mật khẩu ĐỦ MẠNH cho mình. Bạn có thể để trống và Enter để tiếp tục. Nếu có mật khẩu thì sẽ bảo mật hơn. 
+Đầu tiên, hãy đảm bảo rằng ssh-agent đang chạy:
 
-Sau khi nhập mật khẩu, bạn sẽ nhận được thông báo về việc mật khẩu đã lưu vào địa chỉ lúc nãy bạn chỉ định:  
-```bash
-Your identification has been saved in /home/congtc/.ssh/id_rs.
-#Your public key has been saved in /home/congtc/.ssh/id_rsa.pub
-#The key fingerprint is:
-#SHA256:UzqZZeMSpoaHrmviS6CEqtGfejnuj7008IUDRew congtc@congtc
-```
-
-### Bước 3: Thêm key của bạn vào ssh-agent 
-
-ssh-agent là trình quản lý ssh key của bạn, công việc của nó thì nãy mình có nói qua ở trên rồi đó. 
-
-Đảm bảo rằng ssh-agent đã được kích hoạt bằng lệnh:  
 ```bash
 eval "$(ssh-agent -s)"
 # Agent pid 6980
 ```
 
-Add ssh key của bạn vào ssh-agent:  
+Sau đó, thêm SSH private key của bạn vào ssh-agent:
+
 ```bash
 ssh-add ~/.ssh/id_rsa
 ```
 
-Lưu ý: id_rsa chính là private key của bạn, nếu ở bước 2, bạn có key khác thì thay tên key tương ứng vào. 
+*(Lưu ý: Nếu ở Bước 2 bạn đã đặt tên file key khác, hãy thay `id_rsa` bằng tên tương ứng).*
 
-### Bước 4: Thêm ssh public key vào tài khoản trên server của bạn (github…) 
+### Bước 4: Thêm SSH Public Key lên GitHub
 
-Bạn có thể dùng lệnh sau để show nội dung file ssh-key và tiến hành copy nó.  
+Bây giờ, bạn cần lấy nội dung của public key để dán lên GitHub. Dùng lệnh `cat` để hiển thị nội dung file:
+
 ```bash
 cat ~/.ssh/id_rsa.pub
 ```
 
-Đối với Github:
-1. Truy cập vào địa chỉ: https://github.com/settings/profile
-2. Click chọn SSH and GPG keys > New SSH Key 
-3. Phần Tittle chỉ là để đặt tên thôi nên bạn muốn để là gì cũng được. Phần Key hãy nhập nội dung mà bạn copy hồi nãy nào 
-4. Sau đó click nút Add SSH Key là xong thôi 
+**Thao tác trên GitHub:**
+1. Copy toàn bộ đoạn text vừa được in ra trên terminal.
+2. Truy cập vào **[Settings > SSH and GPG keys](https://github.com/settings/profile)** trên GitHub của bạn.
+3. Click vào nút **New SSH Key**.
+4. Điền **Title** (ví dụ: `Laptop Work`, `PC Home` để dễ nhớ).
+5. Dán đoạn nội dung vừa copy vào phần **Key**.
+6. Click **Add SSH Key** để hoàn tất.
 
-### Bước 5: Kiếm tra lại kết nối  
+### Bước 5: Kiểm tra lại kết nối
+
+Để xác nhận mọi thứ hoạt động trơn tru, hãy ping thử đến GitHub bằng SSH:
+
 ```bash
 ssh -T git@github.com
 ```
 
-Có thể bạn sẽ nhận được thông báo về việc thêm host github vào danh sách tin cậy:  
-```bash
-The authenticity of host 'github.com (20.205.243.166)' can't be established
-# Are you sure you want to continue connecting (yes/no)?
+Nếu đây là lần đầu tiên kết nối, bạn có thể nhận được một thông báo xác nhận độ tin cậy của host:
+
+```text
+The authenticity of host 'github.com (20.205.243.166)' can't be established.
+ED25519 key fingerprint is SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4fUvCOqU.
+Are you sure you want to continue connecting (yes/no/[fingerprint])?
 ```
 
-Bạn chỉ việc gõ yes vào terminal rồi Enter là được. Và bạn sẽ nhận được dòng thông báo thành công:  
-```bash
+Hãy gõ `yes` và nhấn Enter. Cuối cùng, nếu bạn thấy dòng thông báo chào mừng sau:
+
+```text
 Hi tranchiencongtd! You've successfully authenticated, but GitHub does not provide shell access.
 ```
 

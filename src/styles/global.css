@@ -132,3 +132,24 @@ body {
   --pagefind-ui-border-radius: 0.5rem !important;
   --pagefind-ui-primary: oklch(11% 0 0) !important;
 }
+
+
+/* Chỉnh lại style trong bài viết giống github */
+/* 
+.prose code:not(pre code) {
+  // Nền xám nhạt, làm hơi trong suốt để hòa vào nền tốt hơn
+  @apply bg-zinc-100/80 dark:bg-zinc-800/80;
+
+  // Đổi màu chữ sang hồng/đỏ nhạt (Giống Github) hoặc xanh/cam tùy gu của bạn
+  @apply text-pink-600 dark:text-pink-400;
+
+  // Viền mỏng sắc nét
+  @apply border border-zinc-200 dark:border-zinc-700;
+
+  // Padding, bo góc và kích thước chữ tương đối
+  @apply px-1.5 py-[0.125rem] rounded-md text-[0.875em] font-mono;
+
+  // Đậm hơn chữ bình thường một chút để dễ đọc
+  font-weight: 500;
+}
+*/
