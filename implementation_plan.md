@@ -1,4 +1,4 @@
-# Tech Blog — Kế hoạch lựa chọn công nghệ
+# Tech Blog - Kế hoạch lựa chọn công nghệ
 
 Xây dựng một blog cá nhân chia sẻ kiến thức IT, **không cần server/domain riêng**, giao diện minimal, với GitHub Pages + GitHub Actions làm nền tảng hosting & CI/CD.
 
@@ -48,10 +48,10 @@ Xây dựng một blog cá nhân chia sẻ kiến thức IT, **không cần serv
 | ❌ Vanilla CSS | Cần viết nhiều hơn |
 
 **Design system:**
-- **Tailwind CSS v4** — CSS-first configuration (không cần `tailwind.config.js`)
+- **Tailwind CSS v4** - CSS-first configuration (không cần `tailwind.config.js`)
 - `@tailwindcss/typography` plugin → prose classes cho bài viết Markdown cực đẹp
 - Google Fonts: **Inter** (body) + **JetBrains Mono** (code)
-- **Monochrome palette** — đen/trắng thuần, không accent color
+- **Monochrome palette** - đen/trắng thuần, không accent color
 - Dark/Light mode via Tailwind `dark:` variant + `localStorage` toggle
 - Responsive với Tailwind responsive prefixes (`sm:`, `md:`, `lg:`)
 
@@ -188,7 +188,7 @@ blog/
 | **Comments** | ✅ Giscus (GitHub Discussions) |
 | **Analytics** | ✅ Google Analytics 4 |
 | **Search** | ✅ Pagefind (static search) |
-| **Accent Color** | Monochrome — đen/trắng thuần (minimal nhất) |
+| **Accent Color** | Monochrome - đen/trắng thuần (minimal nhất) |
 | **Tailwind** | v4 (CSS-first, 2025) |
 
 ---
