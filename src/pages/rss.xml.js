@@ -6,7 +6,7 @@ export async function GET(context) {
   const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
   return rss({
-    title: 'congtc.cs - Blog công nghệ thông tin',
+    title: 'congtc - Blog công nghệ thông tin',
     description: 'Blog chia sẻ kiến thức về lập trình, DevOps, hệ thống, và công nghệ thông tin.',
     site: context.site,
     items: sortedPosts.map(post => ({
