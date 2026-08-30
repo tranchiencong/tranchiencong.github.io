@@ -24,7 +24,7 @@ const {
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const ogImageURL = ogImage
   ? new URL(ogImage, Astro.site).toString()
-  : new URL("/og-default.png", Astro.site).toString();
+  : new URL("/og-default.jpg", Astro.site).toString();
 ---
 
 <!doctype html>
