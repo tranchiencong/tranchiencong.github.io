@@ -1,0 +1,37 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TagBadge from '../../components/TagBadge.astro';
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+
+// Aggregate all tags with counts
+const tagCounts = allPosts.reduce<Record<string, number>>((acc, post) => {
+  post.data.tags.forEach(tag => {
+    acc[tag] = (acc[tag] || 0) + 1;
+  });
+  return acc;
+}, {});
+
+const tags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
+---
+
+<BaseLayout
+  title="Tags — congtc.cs"
+  description="Tất cả các chủ đề và tags trong blog công nghệ."
+>
+  <section class="animate-fade-in">
+    <h1 class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 mb-1">
+      Tags
+    </h1>
+    <p class="text-sm text-zinc-400 dark:text-zinc-500 mb-8 font-mono">
+      {tags.length} chủ đề
+    </p>
+
+    <div class="flex flex-wrap gap-2">
+      {tags.map(([tag, count]) => (
+        <TagBadge tag={tag} count={count} />
+      ))}
+    </div>
+  </section>
+</BaseLayout>

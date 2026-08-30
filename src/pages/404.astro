@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="404 — Trang không tồn tại · congtc.cs"
+  description="Trang bạn tìm kiếm không tồn tại."
+>
+  <section class="flex flex-col items-center justify-center text-center py-24 animate-fade-in">
+    <p class="text-7xl font-bold text-zinc-100 dark:text-zinc-800 mb-4 font-mono select-none">
+      404
+    </p>
+    <h1 class="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+      Trang không tồn tại
+    </h1>
+    <p class="text-zinc-500 dark:text-zinc-400 text-sm mb-8">
+      Đường dẫn này không có hoặc đã bị xóa.
+    </p>
+    <a
+      href="/"
+      id="btn-go-home"
+      class="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-sm font-medium hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors"
+    >
+      ← Về trang chủ
+    </a>
+  </section>
+</BaseLayout>

@@ -1,0 +1,48 @@
+---
+// Giscus Comments Component
+// Setup: https://giscus.app/
+// 1. Go to https://giscus.app and configure your repo
+// 2. Enable GitHub Discussions in your repo settings
+// 3. Replace the data-repo, data-repo-id, data-category, data-category-id values below
+---
+
+<section class="mt-4">
+  <h2 class="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-6">
+    Bình luận
+  </h2>
+  <div id="giscus-container" class="giscus">
+    <script
+      is:inline
+      src="https://giscus.app/client.js"
+      data-repo="tranchiencong/tranchiencong.github.io"
+      data-repo-id="YOUR_REPO_ID"
+      data-category="Announcements"
+      data-category-id="YOUR_CATEGORY_ID"
+      data-mapping="pathname"
+      data-strict="0"
+      data-reactions-enabled="1"
+      data-emit-metadata="0"
+      data-input-position="top"
+      data-theme="preferred_color_scheme"
+      data-lang="vi"
+      data-loading="lazy"
+      crossorigin="anonymous"
+      async
+    ></script>
+  </div>
+</section>
+
+<script>
+  // Sync Giscus theme with blog dark mode toggle
+  const observer = new MutationObserver(() => {
+    const isDark = document.documentElement.classList.contains('dark');
+    const iframe = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+    if (iframe?.contentWindow) {
+      iframe.contentWindow.postMessage(
+        { giscus: { setConfig: { theme: isDark ? 'dark' : 'light' } } },
+        'https://giscus.app'
+      );
+    }
+  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+</script>

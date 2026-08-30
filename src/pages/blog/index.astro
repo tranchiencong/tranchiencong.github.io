@@ -1,0 +1,32 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const posts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<BaseLayout
+  title="Tất cả bài viết — congtc.cs"
+  description="Danh sách tất cả bài viết về công nghệ thông tin, lập trình, DevOps."
+>
+  <section class="animate-fade-in">
+    <h1 class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 mb-1">
+      Bài viết
+    </h1>
+    <p class="text-sm text-zinc-400 dark:text-zinc-500 mb-8 font-mono">
+      {posts.length} bài viết
+    </p>
+
+    {posts.length > 0 ? (
+      <div>
+        {posts.map(post => <PostCard post={post} />)}
+      </div>
+    ) : (
+      <p class="text-zinc-400 dark:text-zinc-500 text-sm py-8 border-t border-zinc-100 dark:border-zinc-800">
+        Chưa có bài viết nào. Hãy quay lại sau nhé!
+      </p>
+    )}
+  </section>
+</BaseLayout>

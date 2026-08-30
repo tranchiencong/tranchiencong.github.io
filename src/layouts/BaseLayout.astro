@@ -1,0 +1,87 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+export interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+  pubDate?: Date;
+  tags?: string[];
+}
+
+const {
+  title,
+  description = 'Blog chia sẻ kiến thức về Công nghệ thông tin — tranchiencong',
+  ogImage,
+  pubDate,
+  tags = [],
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const ogImageURL = ogImage
+  ? new URL(ogImage, Astro.site).toString()
+  : new URL('/og-default.png', Astro.site).toString();
+---
+
+<!doctype html>
+<html lang="vi" class="">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- SEO -->
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content={pubDate ? 'article' : 'website'} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:image" content={ogImageURL} />
+    <meta property="og:site_name" content="congtc.cs" />
+    {pubDate && <meta property="article:published_time" content={pubDate.toISOString()} />}
+    {tags.map(tag => <meta property="article:tag" content={tag} />)}
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageURL} />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="alternate" type="application/rss+xml" title="tranchiencong blog" href="/rss.xml" />
+
+    <!-- Google Analytics 4 -->
+    <!-- Replace G-XXXXXXXXXX with your GA4 Measurement ID -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+
+    <!-- Dark mode: no flash -->
+    <script is:inline>
+      const theme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (theme === 'dark' || (!theme && prefersDark)) {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+  </head>
+  <body class="flex flex-col min-h-dvh">
+    <Header />
+    <main class="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

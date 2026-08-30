@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --color-accent: oklch(0% 0 0);
+}
+
+/* ===== BASE ===== */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  @apply bg-white text-zinc-900 transition-colors duration-300;
+  @apply dark:bg-zinc-950 dark:text-zinc-100;
+  min-height: 100dvh;
+}
+
+/* ===== SELECTION ===== */
+::selection {
+  @apply bg-zinc-900 text-white;
+  @apply dark:bg-zinc-100 dark:text-zinc-900;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-zinc-300 rounded-full;
+  @apply dark:bg-zinc-700;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-zinc-400 dark:bg-zinc-600;
+}
+
+/* ===== FOCUS ===== */
+:focus-visible {
+  @apply outline-2 outline-offset-2 outline-zinc-900 dark:outline-zinc-100 rounded-sm;
+}
+
+/* ===== PROSE OVERRIDES ===== */
+.prose {
+  @apply max-w-none;
+}
+
+.prose pre {
+  @apply rounded-xl border border-zinc-800;
+}
+
+.prose code:not(pre code) {
+  @apply bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200;
+  @apply px-1.5 py-0.5 rounded text-sm font-mono;
+  font-weight: 400;
+}
+
+.prose code:not(pre code)::before,
+.prose code:not(pre code)::after {
+  content: '';
+}
+
+.prose a {
+  @apply text-zinc-900 dark:text-zinc-100 underline underline-offset-4 decoration-zinc-400 dark:decoration-zinc-600;
+  @apply hover:decoration-zinc-900 dark:hover:decoration-zinc-100 transition-colors;
+}
+
+.prose blockquote {
+  @apply border-l-2 border-zinc-300 dark:border-zinc-700 not-italic;
+  @apply text-zinc-600 dark:text-zinc-400;
+}
+
+.prose h2,
+.prose h3,
+.prose h4 {
+  @apply text-zinc-900 dark:text-zinc-100 font-semibold tracking-tight;
+}
+
+.prose hr {
+  @apply border-zinc-200 dark:border-zinc-800;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease both;
+}
+
+.animate-delay-100 {
+  animation-delay: 0.1s;
+}
+
+.animate-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animate-delay-300 {
+  animation-delay: 0.3s;
+}
+
+/* ===== PAGEFIND ===== */
+.pagefind-ui {
+  --pagefind-ui-font: var(--font-sans) !important;
+  --pagefind-ui-border-radius: 0.5rem !important;
+  --pagefind-ui-primary: oklch(11% 0 0) !important;
+}

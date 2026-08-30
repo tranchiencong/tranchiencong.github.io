@@ -1,0 +1,91 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import TagBadge from '../components/TagBadge.astro';
+import Giscus from '../components/Giscus.astro';
+
+export interface Props {
+  title: string;
+  description: string;
+  pubDate: Date;
+  updatedDate?: Date;
+  tags?: string[];
+  minutesRead?: number;
+}
+
+const { title, description, pubDate, updatedDate, tags = [], minutesRead } = Astro.props;
+
+const formattedDate = pubDate.toLocaleDateString('vi-VN', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+const formattedUpdatedDate = updatedDate?.toLocaleDateString('vi-VN', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<BaseLayout {title} {description} {pubDate} {tags}>
+  <article>
+    <!-- Post Header -->
+    <header class="mb-10 animate-fade-in">
+      <!-- Tags -->
+      {tags.length > 0 && (
+        <div class="flex flex-wrap gap-2 mb-4">
+          {tags.map(tag => <TagBadge tag={tag} />)}
+        </div>
+      )}
+
+      <!-- Title -->
+      <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 mb-4 leading-tight">
+        {title}
+      </h1>
+
+      <!-- Description -->
+      <p class="text-lg text-zinc-500 dark:text-zinc-400 leading-relaxed mb-6">
+        {description}
+      </p>
+
+      <!-- Meta -->
+      <div class="flex flex-wrap items-center gap-3 text-sm text-zinc-400 dark:text-zinc-500 border-t border-b border-zinc-100 dark:border-zinc-800 py-3">
+        <time datetime={pubDate.toISOString()}>
+          {formattedDate}
+        </time>
+        {minutesRead && (
+          <>
+            <span class="text-zinc-200 dark:text-zinc-700">·</span>
+            <span>{minutesRead} phút đọc</span>
+          </>
+        )}
+        {updatedDate && (
+          <>
+            <span class="text-zinc-200 dark:text-zinc-700">·</span>
+            <span>Cập nhật: {formattedUpdatedDate}</span>
+          </>
+        )}
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="prose prose-zinc dark:prose-invert animate-fade-in animate-delay-100">
+      <slot />
+    </div>
+
+    <!-- Divider -->
+    <hr class="my-12 border-zinc-100 dark:border-zinc-800" />
+
+    <!-- Tags Footer -->
+    {tags.length > 0 && (
+      <div class="flex flex-wrap items-center gap-2 mb-10 animate-fade-in animate-delay-200">
+        <span class="text-sm text-zinc-400">Tags:</span>
+        {tags.map(tag => <TagBadge tag={tag} />)}
+      </div>
+    )}
+
+    <!-- Comments -->
+    <div class="animate-fade-in animate-delay-300">
+      <Giscus />
+    </div>
+  </article>
+</BaseLayout>

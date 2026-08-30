@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Tìm kiếm — congtc.cs"
+  description="Tìm kiếm bài viết trên blog công nghệ."
+>
+  <section class="animate-fade-in">
+    <h1 class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 mb-8">
+      Tìm kiếm
+    </h1>
+    <div id="search" class="w-full"></div>
+  </section>
+</BaseLayout>
+
+<!-- Pagefind UI -->
+<link is:inline href="/pagefind/pagefind-ui.css" rel="stylesheet" />
+<script is:inline src="/pagefind/pagefind-ui.js"></script>
+<script is:inline>
+  window.addEventListener('DOMContentLoaded', () => {
+    if (typeof PagefindUI !== 'undefined') {
+      new PagefindUI({
+        element: '#search',
+        showSubResults: true,
+        translations: {
+          placeholder: 'Tìm kiếm bài viết...',
+          zero_results: 'Không tìm thấy kết quả cho "[SEARCH_TERM]"',
+        },
+      });
+    } else {
+      document.getElementById('search').innerHTML = `
+        <div class="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 text-sm border border-yellow-200 dark:border-yellow-800">
+          <p class="font-semibold mb-1">Tính năng tìm kiếm đang ở chế độ Dev</p>
+          <p>Tìm kiếm (Pagefind) chỉ hoạt động sau khi build. Để test tìm kiếm locally, hãy chạy lệnh <code>npm run build</code> sau đó chạy <code>npm run preview</code>.</p>
+        </div>
+      `;
+    }
+  });
+</script>

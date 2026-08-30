@@ -1,0 +1,47 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+
+export async function getStaticPaths() {
+  const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+  const tags = [...new Set(allPosts.flatMap(post => post.data.tags))];
+
+  return tags.map(tag => ({
+    params: { tag },
+    props: {
+      posts: allPosts
+        .filter(post => post.data.tags.includes(tag))
+        .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()),
+    },
+  }));
+}
+
+const { tag } = Astro.params;
+const { posts } = Astro.props;
+---
+
+<BaseLayout
+  title={`#${tag} — congtc.cs`}
+  description={`Các bài viết về ${tag} trong blog công nghệ.`}
+>
+  <section class="animate-fade-in">
+    <a
+      href="/tags"
+      class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors font-mono mb-6 inline-block"
+    >
+      ← Tất cả tags
+    </a>
+
+    <h1 class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 mb-1">
+      #{tag}
+    </h1>
+    <p class="text-sm text-zinc-400 dark:text-zinc-500 mb-8 font-mono">
+      {posts.length} bài viết
+    </p>
+
+    <div>
+      {posts.map(post => <PostCard post={post} />)}
+    </div>
+  </section>
+</BaseLayout>
