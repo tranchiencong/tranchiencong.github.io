@@ -1,5 +1,7 @@
 ---
+import { Image } from "astro:assets";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import meImage from "../assets/me.jpg";
 ---
 
 <BaseLayout
@@ -7,23 +9,39 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   description="Xin chào! Mình là Trần Chiến Công, giảng viên và người học Computer Science."
 >
   <article class="animate-fade-in">
-    <h1
+    <div class="flex flex-col-reverse md:flex-row gap-10 items-start mb-12">
+      <div class="flex-1 w-full">
+        <h1
       class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 mb-8"
-    >
-      Về mình
-    </h1>
+        >
+          Về mình
+        </h1>
+        <div class="prose prose-zinc dark:prose-invert">
+          <p>
+            Xin chào! Mình là <strong>Trần Chiến Công</strong>. Mình học và làm việc
+            trong lĩnh vực Computer Science, hiện đang giảng dạy chuyên ngành Công
+            nghệ thông tin.
+          </p>
+          <p>
+            Mình thích lập trình, tìm hiểu công nghệ và đặc biệt quan tâm đến AI,
+            Machine Learning và Deep Learning. Về nghiên cứu, mình chủ yếu tìm hiểu
+            các bài toán trong Natural Language Processing (NLP) và Computer Vision.
+          </p>
+        </div>
+      </div>
+      <div class="w-[220px] md:w-[260px] mx-auto md:mx-0 flex-shrink-0 md:mt-10">
+        <div class="relative group">
+  
+          <Image
+            src={meImage}
+            alt="Trần Chiến Công"
+            class="relative w-full h-auto aspect-square rounded-3xl object-cover shadow-xl -rotate-3"
+          />
+        </div>
+      </div>
+    </div>
 
     <div class="prose prose-zinc dark:prose-invert">
-      <p>
-        Xin chào! Mình là <strong>Trần Chiến Công</strong>. Mình học và làm việc
-        trong lĩnh vực Computer Science, hiện đang giảng dạy chuyên ngành Công
-        nghệ thông tin.
-      </p>
-      <p>
-        Mình thích lập trình, tìm hiểu công nghệ và đặc biệt quan tâm đến AI,
-        Machine Learning và Deep Learning. Về nghiên cứu, mình chủ yếu tìm hiểu
-        các bài toán trong Natural Language Processing (NLP) và Computer Vision.
-      </p>
       <h2>Mình làm gì?</h2>
 
       <p>
