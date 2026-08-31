@@ -100,4 +100,4 @@ Kết quả thu được chứng minh rằng SPDNet cải thiện độ chính x
 - Giải pháp cốt lõi mang tên SPDNet sử dụng các lớp biến đổi song tuyến tính và các lớp phi tuyến tính dựa trên thao tác cắt ngưỡng giá trị riêng. Cách tiếp cận này mô phỏng hoàn hảo các thành phần tích chập và ReLU kinh điển nhưng hoạt động trong không gian Riemann.
 - Bài báo thành công trong việc xây dựng một hệ thống tính toán đạo hàm ma trận tổng quát và tối ưu hoá trực tiếp trên đa tạp Stiefel, phá vỡ rào cản lớn nhất khi huấn luyện các mô hình học sâu phi tuyến.
 
-Nghiên cứu này dù chứa hàm lượng giải tích và toán học ma trận rất lớn, nhưng nó đã đặt một nền móng vững chắc cho hướng đi Deep Learning Hình học, mở ra cơ hội thiết kế các kiến trúc học máy cho nhiều dạng cấu trúc dữ liệu không gian phức tạp khác trong tương lai.
+Nghiên cứu này dù chứa hàm lượng giải tích và toán học ma trận rất lớn, đã đặt một nền móng vững chắc cho hướng đi Deep Learning Hình học, mở ra cơ hội thiết kế các kiến trúc học máy cho nhiều dạng cấu trúc dữ liệu không gian phức tạp khác trong tương lai.
