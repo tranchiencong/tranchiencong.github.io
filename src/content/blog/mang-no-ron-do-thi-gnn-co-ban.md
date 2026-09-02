@@ -31,18 +31,39 @@ GNN sinh ra để giải quyết bài toán cốt lõi này: **Học trực ti�
 
 ## 2. Các khái niệm cốt lõi: GNN hoạt động như thế nào?
 
-Mục tiêu chính của một mạng GNN là tạo ra các **Node Embeddings**. Một Node Embedding tốt không chỉ chứa thông tin cá nhân của nút đó, mà còn phải gói gọn cả thông tin về những nút xung quanh nó. "Gần mực thì đen, gần đèn thì rạng" chính là triết lý của GNN.
+Mục tiêu chính của một mạng GNN là tạo ra các **Node Embeddings** — các vector số đại diện cho từng nút trong đồ thị. Một Node Embedding tốt không chỉ chứa thông tin cá nhân của riêng nút đó, mà còn phải gói gọn cả cấu trúc không gian và ngữ cảnh xung quanh nó. Triết lý của GNN gói gọn trong câu: *"Hãy cho tôi biết những người bạn xung quanh bạn, tôi sẽ cho bạn biết bạn là ai"*.
 
-Cơ chế sức mạnh đằng sau hầu hết các GNN được gọi là **Message Passing**. Quá trình này diễn ra qua 3 bước chính tại mỗi layer:
+Để làm được điều này, GNN sử dụng cơ chế cốt lõi mang tên **Message Passing** (Truyền thông điệp).
 
-1. **Aggregate:** Đối với một nút nhất định, mạng sẽ thu thập thông điệp từ các nút hàng xóm trực tiếp. Vì số lượng hàng xóm là không cố định, hàm Aggregate sẽ giúp gom tất cả thông tin này lại thành một khối vector có kích thước cố định.
-2. **Update:** Nút đó sẽ lấy khối thông tin vừa gom được từ hàng xóm, kết hợp với thuộc tính hiện tại của chính nó để cập nhật lại embedding của mình.
-3. **Repeat:** Quá trình này được lặp lại qua nhiều layer. Khi đi qua 1 layer, bạn biết thông tin của bạn bè mình. Khi đi qua 2 layer, bạn biết thông tin của "bạn của bạn bè" mình. Khi đi qua $K$ layer, bạn tổng hợp được thông tin từ các nút nằm cách xa $K$ bước nhảy.
+### 2.1 Cây tính toán (Computation Graph) và luồng dữ liệu
+
+Hãy tưởng tượng bạn muốn cập nhật thông tin cho một Nút $A$. Nút $A$ kết nối trực tiếp với các hàng xóm $B, C, D$. Đến lượt mình, $B, C, D$ lại có những người bạn riêng của họ.
+
+Khi đưa qua một mô hình GNN, mỗi nút sẽ tự động mở ra một **Cây tính toán (Computation Graph)** riêng biệt dựa trên các mối liên kết xung quanh nó:
+
+![Mô hình cây tính toán và gom nhóm hàng xóm trong GNN](https://snap-stanford.github.io/cs224w-notes/assets/img/aggregate_neighbors.png)
+*(Nguồn ảnh: Khóa học CS224W - Đại học Stanford: Cấu trúc cây tính toán để xác định cách thông tin lan truyền về nút mục tiêu)*
+
+### 2.2 Ba bước vận hành trong mỗi tầng Message Passing
+
+Tại mỗi tầng (Layer) của mạng GNN, thông tin được truyền và cập nhật qua 3 bước toán học chính:
+
+1. **Tính toán thông điệp (Message Computation):** Mỗi nút hàng xóm $u$ sẽ lấy vector đặc trưng hiện tại của nó $h_u$ và đưa qua một biến đổi tuyến tính để tạo ra một "gói thông điệp" gửi sang các nút lân cận.
+2. **Gom nhóm thông điệp (Aggregation):** Đây là bước giải quyết bài toán hóc búa nhất của đồ thị: một người có 2 bạn, nhưng người khác lại có 500 bạn. Hàm Aggregation sẽ gom tất cả các gói thông điệp từ mọi hàng xóm lại thành một vector duy nhất có kích thước cố định.
+   * Để đảm bảo tính chất **Permutation Invariance** (không phụ thuộc vào thứ tự liệt kê các nút), hàm gom nhóm thường là các phép toán đối xứng như `Sum` (Tổng), `Mean` (Trung bình), hoặc `Max` (Lớn nhất).
+3. **Cập nhật trạng thái (Update):** Nút đích nhận vector thông điệp vừa gom được từ hàng xóm, kết hợp với vector đặc trưng cũ của chính nó thông qua một mạng nơ-ron nhỏ (MLP) kèm hàm kích hoạt phi tuyến tính như `ReLU` để sinh ra vector đặc trưng mới $h_v^{(k)}$.
 
 ![Minh họa quá trình Message Passing giữa các lớp trong GNN](https://uvadlc-notebooks.readthedocs.io/en/latest/_images/torch_geometric_stacking_graphs.png)
-*(Nguồn ảnh: UvA Deep Learning Tutorials)*
+*(Nguồn ảnh: UvA Deep Learning Tutorials - Quá trình mở rộng vùng quan sát qua từng tầng)*
 
-Đặc tính quan trọng nhất của GNN là tính **Bất biến hoán vị (Permutation Invariance)**. Khác với ảnh nơi các pixel bị cố định vị trí, bạn có thể vẽ một đồ thị trên giấy theo muôn ngàn hình thù khác nhau miễn là các đường nối không đổi. GNN đảm bảo rằng kết quả học được sẽ luôn giống hệt nhau bất kể đồ thị bị xoay hay hoán đổi vị trí hiển thị như thế nào.
+### 2.3 Xếp chồng nhiều tầng và hiện tượng Over-smoothing
+
+Khi xếp chồng $K$ tầng GNN liên tiếp nhau, vùng quan sát của mỗi nút sẽ lan rộng tương tự như trường tiếp nhận (Receptive Field) trong mạng CNN:
+- **Tầng 1 (1-hop):** Nút chỉ nắm được thông tin của những người bạn trực tiếp.
+- **Tầng 2 (2-hop):** Nút học thêm thông tin của "bạn của bạn bè".
+- **Tầng $K$ ($K$-hop):** Thông tin từ các nút cách xa $K$ bước nhảy đã được tổng hợp về nút gốc.
+
+> **Lưu ý kỹ thuật quan trọng:** Khác với CNN hay Transformer có thể xếp chồng hàng chục đến hàng trăm tầng, GNN thông thường chỉ dùng từ 2 đến 4 tầng. Nếu xếp chồng quá sâu, mạng sẽ gặp hiện tượng **Over-smoothing** — khi đó thông tin từ toàn bộ đồ thị bị trộn lẫn vào nhau, khiến mọi nút đều có vector đặc trưng gần như giống hệt nhau và mô hình mất khả năng phân biệt.
 
 ## 3. Các bài toán và ví dụ ứng dụng thực tế
 
@@ -62,10 +83,10 @@ Trong bài toán này, các thành viên trong một câu lạc bộ võ thuật
 ### 3.2 Link Prediction
 Bài toán: Dự đoán xem liệu giữa hai nút có tồn tại một cạnh kết nối hay không.
 
-**Ví dụ thực tế:** Hệ thống gợi ý (Recommendation System).
-Hãy tưởng tượng một đồ thị gồm 2 loại nút: Khách hàng và Sản phẩm. Nếu Khách hàng A từng mua Sản phẩm X, ta vẽ một cạnh nối giữa họ. Nhiệm vụ của GNN là phân tích tổng thể cấu trúc mua sắm của hàng triệu người để dự đoán liên kết mới: Liệu Khách hàng A có khả năng mua Sản phẩm Y hay không?
+**Ví dụ thực tế:** Hệ thống gợi ý Recommendation System trên Spotify.
+Hãy tưởng tượng hệ thống của Spotify là một đồ thị khổng lồ gồm 2 loại nút: Người dùng và Bài hát. Nếu bạn là Người dùng A và lưu Bài hát X, một cạnh kết nối sẽ được tạo ra. Nhiệm vụ của GNN là phân tích cấu trúc nghe nhạc của hàng triệu người. Nếu phát hiện bạn và Người dùng B có chung nhiều bài hát như X, Z, GNN sẽ truyền thông tin và dự đoán bạn cũng sẽ thích Bài hát Y mà Người dùng B vừa nghe, từ đó dự đoán một liên kết mới giữa bạn và Bài hát Y.
 
-**Ứng dụng công nghiệp:** Hệ thống gợi ý "Những người bạn có thể biết" trên Facebook, hoặc dự đoán xem hai loại thuốc khi uống cùng nhau có sinh ra phản ứng phụ hay không.
+**Ứng dụng công nghiệp:** Gợi ý bài hát và playlist trên Spotify, tính năng "Những người bạn có thể biết" trên Facebook, hoặc dự đoán xem hai loại thuốc khi uống cùng nhau có sinh ra phản ứng phụ hay không.
 
 ### 3.3 Graph Classification
 Bài toán: Đưa ra dự đoán hoặc phân loại cho toàn bộ cấu trúc đồ thị như một thực thể duy nhất.
@@ -104,3 +125,5 @@ Mạng nơ-ron đồ thị (GNN) đã mở ra một kỷ nguyên mới cho Deep 
 [7] Petar Veličković et al., *Graph Attention Networks (GAT)* (2018), ArXiv.
 
 [8] Thomas N. Kipf & Max Welling, *Semi-Supervised Classification with Graph Convolutional Networks* (2017), ArXiv.
+
+[9] Stanford University, *Machine Learning with Graphs*, CS224W.
