@@ -2,7 +2,7 @@
 title: "Tìm hiểu cơ bản về Mạng nơ-ron Đồ thị (Graph Neural Networks - GNN)"
 description: "Khám phá Mạng nơ-ron đồ thị (GNN) là gì, tại sao chúng ta cần chúng để xử lý dữ liệu phi cấu trúc và các khái niệm cốt lõi như Message Passing."
 pubDate: "2026-09-02"
-tags: ["gnn", "deep leatning"]
+tags: ["gnn", "deep learning"]
 ---
 
 Mặc dù Mạng nơ-ron tích chập (CNN) đã cực kỳ thành công trong việc xử lý hình ảnh (như bạn có thể xem lại bài [Tìm hiểu về Convolutional Neural Network](/blog/tim-hieu-ve-cnn-trong-deep-learning/)) và mạng nơ-ron hồi quy (RNN) làm chủ các dạng dữ liệu tuần tự, có một lượng lớn dữ liệu trong thế giới thực không thuộc dạng lưới hay dạng chuỗi. Đó là lúc **Mạng nơ-ron đồ thị (GNN)** xuất hiện.
