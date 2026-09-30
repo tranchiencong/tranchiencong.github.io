@@ -98,6 +98,10 @@ body {
   @apply border-zinc-200 dark:border-zinc-800;
 }
 
+.prose img {
+  @apply block max-w-full h-auto mx-auto;
+}
+
 /* ===== ANIMATIONS ===== */
 @keyframes fade-in {
   from {
