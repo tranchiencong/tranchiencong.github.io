@@ -2,7 +2,7 @@
 title: "Tìm hiểu về mạng LSTM trong Deep Learning"
 description: "Khám phá cấu trúc bên trong của mạng LSTM, cách nó giải quyết triệt để vấn đề Vanishing Gradient của RNN bằng cơ chế băng chuyền và các cổng thông minh."
 pubDate: "2026-09-30"
-heroImage: "https://images.unsplash.com/photo-1507146426996-ef05306b995a?q=80&w=1200&auto=format&fit=crop"
+tags: ["lstm", "deep learning"]
 ---
 
 Trong bài viết trước về [Mạng nơ-ron hồi quy RNN](/blog/tim-hieu-ve-rnn-trong-deep-learning/), chúng ta đã đi sâu vào lý do tại sao các kiến trúc Feed-forward truyền thống không thể xử lý dữ liệu tuần tự, và cách RNN mang đến khái niệm "trí nhớ" để giải quyết vấn đề này. Tuy nhiên, ở cuối bài, chúng ta cũng đã nhận ra rào cản tử huyệt của RNN: hiện tượng **Vanishing Gradient**. Khi câu văn hay chuỗi thời gian quá dài, mô hình RNN cơ bản sẽ hoàn toàn "quên sạch" thông tin ở những bước đầu tiên.

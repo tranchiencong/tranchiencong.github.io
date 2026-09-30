@@ -2,7 +2,7 @@
 title: "Tìm hiểu về Convolutional Neural Network (CNN) trong Deep Learning"
 description: "Bài viết này sẽ giúp bạn hiểu rõ về Mạng nơ-ron tích chập (CNN), tại sao nó lại quan trọng và cách hoạt động của nó trong xử lý ảnh."
 pubDate: "2026-08-31"
-heroImage: "https://s3.ap-southeast-1.amazonaws.com/datawow/uploader/blogs/1*XbuW8WuRrAY5pC4t-9DZAQ.jpg"
+tags: ["cnn", "deep learning", "computer vision"]
 ---
 
 Trong lĩnh vực Trí tuệ nhân tạo và Học sâu, **Mạng nơ-ron tích chập (viết tắt là CNN)** là một trong những kiến trúc mạng học sâu phổ biến và mang tính đột phá nhất. Kể từ khi ra đời, kiến trúc này đã tạo ra một cuộc cách mạng thực sự, đặc biệt là trong các tác vụ liên quan đến xử lý dữ liệu hình ảnh và thị giác máy tính. 

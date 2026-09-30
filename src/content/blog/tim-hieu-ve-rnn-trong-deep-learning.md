@@ -2,7 +2,7 @@
 title: "Tìm hiểu về Recurrent Neural Networks (RNN) trong Deep Learning"
 description: "Bài viết này giúp bạn hiểu chi tiết về Mạng nơ-ron hồi quy (RNN), cách chúng làm chủ các dạng dữ liệu tuần tự (như văn bản, âm thanh) và khái niệm 'trí nhớ' trong Học sâu."
 pubDate: "2026-09-20"
-heroImage: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?q=80&w=1200&auto=format&fit=crop"
+tags: ["rnn", "deep learning"]
 ---
 
 Nếu như Mạng nơ-ron tích chập (CNN) là "vị vua" trong thế giới xử lý hình ảnh (bạn có thể đọc lại bài viết [Tìm hiểu về Convolutional Neural Network](/blog/tim-hieu-ve-cnn-trong-deep-learning/)), thì khi đối mặt với dữ liệu văn bản, giọng nói, hay dự báo chuỗi thời gian, kiến trúc CNN lại tỏ ra lúng túng.
