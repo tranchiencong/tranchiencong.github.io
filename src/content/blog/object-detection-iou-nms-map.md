@@ -66,66 +66,21 @@ $$
 
 Diện tích giao là $A_I=w_Ih_I$. Phép `max(0, ·)` rất quan trọng: nếu hai box không giao nhau, chiều rộng hoặc chiều cao không thể mang diện tích âm.
 
-Một prediction chỉ được xem là true positive khi đúng lớp, vượt ngưỡng confidence và đạt ngưỡng IoU của protocol đánh giá. Vì vậy, nói mô hình “đúng lớp” vẫn chưa đủ: box quá lệch có thể bị tính là false positive.
+Các công thức trên xem tọa độ box là tọa độ liên tục. Một số codebase cũ dùng chỉ số pixel bao hàm cả hai đầu và xuất hiện số hạng `+1` khi tính chiều rộng, chiều cao. Hai convention đều có thể dùng, nhưng không được trộn lẫn giữa encode, decode và evaluator.
+
+Tại một ngưỡng IoU đánh giá cố định, prediction đúng lớp và được ghép với ground truth chưa sử dụng có thể trở thành true positive. Confidence score quyết định thứ tự prediction trên đường precision–recall; một score threshold cố định chủ yếu phục vụ pre-filter hoặc lựa chọn operating point khi triển khai. Vì vậy, nói mô hình “đúng lớp” vẫn chưa đủ: box quá lệch có thể bị tính là false positive.
 
 IoU cũng có giới hạn. Hai box không giao nhau đều cho IoU bằng 0 dù khoảng cách giữa chúng khác nhau. Các loss như GIoU, DIoU và CIoU được đề xuất để cung cấp tín hiệu tối ưu hữu ích hơn, nhưng metric đánh giá và loss huấn luyện không nhất thiết phải giống nhau.
 
-## 4. Precision và Recall trong detection
-
-Sau khi ghép prediction với ground truth theo lớp và ngưỡng IoU:
-
-$$
-\mathrm{Precision}=\frac{TP}{TP+FP},\qquad
-\mathrm{Recall}=\frac{TP}{TP+FN}.
-$$
-
-- Giảm confidence threshold thường tăng recall nhưng cũng tạo thêm false positive.
-- Tăng threshold thường tăng precision nhưng có thể bỏ sót vật thể.
-
-Do detector tạo ra các prediction có score khác nhau, chỉ báo cáo precision tại một threshold tùy ý là chưa đủ. Ta cần xem đường precision–recall khi quét qua nhiều threshold.
-
-### Ghép prediction với ground truth
-
-Việc đếm $TP$, $FP$, $FN$ cần một matching protocol:
-
-1. Xét riêng từng lớp.
-2. Sắp prediction theo confidence giảm dần.
-3. Ghép prediction với ground truth chưa được ghép có IoU lớn nhất.
-4. Nếu IoU vượt threshold, đánh dấu true positive.
-5. Prediction trùng với ground truth đã được ghép vẫn là false positive.
-
-Quy tắc “mỗi ground truth chỉ ghép một lần” ngăn detector nhận thưởng vì dự đoán cùng vật thể nhiều lần.
-
-## 5. Average Precision và mAP
-
-Average Precision (AP) tóm tắt diện tích dưới đường precision–recall của một lớp. Mean Average Precision lấy trung bình AP trên các lớp:
-
-$$
-\mathrm{mAP}=\frac{1}{C}\sum_{c=1}^{C}\mathrm{AP}_c.
-$$
-
-Nhưng “mAP” không phải một con số có định nghĩa duy nhất:
-
-- PASCAL VOC thường gắn với AP tại IoU $0.5$.
-- COCO báo cáo AP trung bình trên các ngưỡng IoU từ $0.50$ đến $0.95$ với bước $0.05$.
-- COCO còn tách AP theo vật thể nhỏ, vừa và lớn.
-
-Vì vậy, hai con số “mAP = 50” có thể không so sánh được nếu dùng protocol khác nhau. Một báo cáo nghiêm túc phải ghi rõ dataset, split, IoU range, kích thước ảnh và single-scale hay multi-scale testing.
-
-### AP không chỉ là trung bình precision
-
-AP được tính từ đường precision–recall sau khi sắp prediction theo score. Các benchmark có thể dùng interpolation khác nhau. PASCAL VOC 2007 từng dùng 11 recall points; các phiên bản sau và COCO dùng cách tích phân/interpolation chi tiết hơn.
-
-Vì vậy, không nên tự viết vài dòng tính “mAP” rồi so trực tiếp với leaderboard nếu chưa tái hiện đúng evaluator chính thức. Cách an toàn là dùng evaluation code của benchmark và pin version.
-
-## 6. Vì sao cần Non-Maximum Suppression?
+## 4. Vì sao cần Non-Maximum Suppression?
 
 Một detector thường tạo nhiều box quanh cùng một vật thể. Non-Maximum Suppression (NMS) là bước hậu xử lý phổ biến:
 
-1. Chọn box có confidence cao nhất.
-2. Giữ box đó làm kết quả.
-3. Loại các box cùng lớp có IoU với nó lớn hơn ngưỡng.
-4. Lặp lại với các box còn lại.
+1. Loại sớm các box có score quá thấp nếu cần kiểm soát chi phí.
+2. Chọn box có confidence cao nhất.
+3. Giữ box đó làm kết quả.
+4. Loại các box cùng lớp có IoU với nó lớn hơn ngưỡng NMS.
+5. Lặp lại với các box còn lại.
 
 NMS giải quyết dự đoán trùng, nhưng có thể loại nhầm khi hai vật thể cùng lớp đứng sát nhau. Soft-NMS giảm score thay vì xóa cứng; các detector khác có thể dùng biến thể learned NMS hoặc thiết kế set prediction để giảm phụ thuộc vào NMS.
 
@@ -150,10 +105,69 @@ while boxes:
 
 Trong hệ thống nhiều lớp, NMS thường chạy độc lập theo lớp. Class-agnostic NMS có thể giảm duplicate giữa các lớp nhưng cũng có thể xóa nhầm hai vật thể khác lớp chồng lên nhau.
 
-Hai threshold có vai trò khác nhau:
+Ba threshold sau có ý nghĩa khác nhau:
 
-- **Confidence threshold** quyết định prediction nào đủ tin cậy để xét.
-- **NMS IoU threshold** quyết định hai prediction có bị xem là trùng nhau hay không.
+| Threshold | Vai trò |
+| --- | --- |
+| Score threshold | Loại prediction có độ tin cậy thấp khi inference hoặc deployment |
+| NMS IoU threshold | Quyết định hai prediction có bị xem là trùng nhau hay không |
+| Evaluation IoU threshold | Quyết định prediction có định vị đủ tốt để ghép với ground truth hay không |
+
+Với detector dùng NMS, evaluator thường nhận các detection đã hậu xử lý. Vì vậy NMS có thể làm thay đổi precision–recall và AP. Khi so sánh mô hình, cần giữ nhất quán cả score pre-filter, NMS variant và `max detections`.
+
+## 5. Precision và Recall trong detection
+
+Sau khi ghép prediction với ground truth theo lớp và ngưỡng IoU:
+
+$$
+\mathrm{Precision}=\frac{TP}{TP+FP},\qquad
+\mathrm{Recall}=\frac{TP}{TP+FN}.
+$$
+
+- Giảm confidence threshold thường tăng recall nhưng cũng tạo thêm false positive.
+- Tăng threshold thường tăng precision nhưng có thể bỏ sót vật thể.
+
+Do detector tạo ra các prediction có score khác nhau, chỉ báo cáo precision tại một threshold tùy ý là chưa đủ. Để tính AP, evaluator sắp prediction theo score và tạo đường precision–recall khi lần lượt chấp nhận thêm prediction.
+
+### Ghép prediction với ground truth
+
+Việc đếm $TP$, $FP$, $FN$ cần một matching protocol. Phiên bản đơn giản hóa thường được mô tả như sau:
+
+1. Xét riêng từng lớp.
+2. Sắp prediction theo confidence giảm dần.
+3. Ghép prediction với ground truth chưa được ghép có IoU lớn nhất.
+4. Nếu IoU vượt threshold, đánh dấu true positive.
+5. Prediction trùng với ground truth đã được ghép vẫn là false positive.
+
+Quy tắc “mỗi ground truth chỉ ghép một lần” ngăn detector nhận thưởng vì dự đoán cùng vật thể nhiều lần.
+
+Evaluator chính thức có thể thêm các quy tắc về annotation `ignore`, vùng `crowd`, phạm vi diện tích và số detection tối đa trên mỗi ảnh. Do đó, quy trình trên giúp hiểu nguyên lý nhưng không thay thế implementation chính thức của benchmark.
+
+## 6. Average Precision và mAP
+
+Average Precision (AP) tóm tắt đường precision–recall của một lớp tại một ngưỡng IoU. Cách interpolation và lấy mẫu recall phụ thuộc evaluator. Mean Average Precision lấy trung bình AP trên các lớp:
+
+$$
+\mathrm{mAP}=\frac{1}{C}\sum_{c=1}^{C}\mathrm{AP}_c.
+$$
+
+Nhưng “mAP” không phải một con số có định nghĩa duy nhất:
+
+- **AP50** hoặc $AP^{IoU=.50}$: AP tại IoU $0.50$, thường gắn với protocol PASCAL VOC.
+- **AP75** hoặc $AP^{IoU=.75}$: tiêu chuẩn localization nghiêm ngặt hơn.
+- **AP@[.50:.95]**: trung bình AP trên 10 ngưỡng IoU từ $0.50$ đến $0.95$ với bước $0.05$; đây là metric chính của COCO.
+- **AP small/medium/large**: AP theo phạm vi diện tích vật thể do evaluator định nghĩa.
+
+Vì vậy, hai con số “mAP = 50” có thể không so sánh được nếu dùng protocol khác nhau. Một báo cáo nghiêm túc phải ghi rõ dataset, split, IoU range, kích thước ảnh và single-scale hay multi-scale testing.
+
+![Minh họa đường precision–recall và cách Average Precision tóm tắt chất lượng detector](https://doc.edgefirst.ai/test/models/assets/metrics/mAP.png)
+*Với một IoU threshold cố định, prediction được xếp theo confidence để tạo precision–recall curve; AP tóm tắt đường cong và mAP lấy trung bình theo lớp, đồng thời có thể lấy trung bình thêm theo nhiều IoU threshold. Nguồn: [EdgeFirst Object Detection Metrics](https://doc.edgefirst.ai/test/models/validation/metrics/detection/).*
+
+### AP không chỉ là trung bình precision
+
+AP được tính từ đường precision–recall sau khi sắp prediction theo score. Các benchmark có thể dùng interpolation khác nhau. PASCAL VOC 2007 từng dùng 11 recall points; COCO evaluator lấy precision đã nội suy tại 101 recall thresholds, đồng thời áp dụng các thiết lập như IoU range, area range và `maxDets`.
+
+Vì vậy, không nên tự viết vài dòng tính “mAP” rồi so trực tiếp với leaderboard nếu chưa tái hiện đúng evaluator chính thức. Cách an toàn là dùng evaluation code của benchmark và pin version.
 
 ## 7. One-stage và two-stage detector
 
@@ -163,7 +177,7 @@ Hai threshold có vai trò khác nhau:
 
 Đây không phải phân chia tuyệt đối giữa “chậm nhưng chính xác” và “nhanh nhưng kém”. Kết quả còn phụ thuộc backbone, input resolution, implementation, hardware và training recipe. Chỉ so sánh tên họ mô hình là không đủ.
 
-## 8. Loss cho bounding-box regression
+## 8. Đọc thêm: loss cho bounding-box regression
 
 Tối ưu trực tiếp $L_1$ hoặc Smooth $L_1$ trên tọa độ không hoàn toàn khớp với metric IoU. Hai box có sai số tọa độ tương tự có thể có IoU rất khác nếu kích thước vật thể khác nhau.
 
@@ -223,4 +237,10 @@ Bài tiếp theo sẽ đi qua quá trình tiến hóa của detector hai giai đ
 [2] T.-Y. Lin et al., [*Microsoft COCO: Common Objects in Context*](https://arxiv.org/abs/1405.0312), ECCV 2014.
 
 [3] N. Bodla et al., [*Soft-NMS — Improving Object Detection With One Line of Code*](https://openaccess.thecvf.com/content_iccv_2017/html/Bodla_Soft-NMS_--_Improving_ICCV_2017_paper.html), ICCV 2017.
+
+[4] COCO Consortium, [*COCO Detection Evaluation*](https://cocodataset.org/dataset/detection-eval.htm) và [implementation `COCOeval`](https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocotools/cocoeval.py).
+
+[5] H. Rezatofighi et al., [*Generalized Intersection Over Union: A Metric and a Loss for Bounding Box Regression*](https://openaccess.thecvf.com/content_CVPR_2019/html/Rezatofighi_Generalized_Intersection_Over_Union_A_Metric_and_a_Loss_for_CVPR_2019_paper.html), CVPR 2019.
+
+[6] Z. Zheng et al., [*Distance-IoU Loss: Faster and Better Learning for Bounding Box Regression*](https://ojs.aaai.org/index.php/AAAI/article/view/6999), AAAI 2020.
 

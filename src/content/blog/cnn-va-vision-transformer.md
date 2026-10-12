@@ -1,7 +1,7 @@
 ---
 title: "CNN và Vision Transformer: Khác nhau ở inductive bias nào?"
 description: "So sánh CNN và Vision Transformer về locality, equivariance, data efficiency, computational cost và cách thiết kế thí nghiệm công bằng."
-pubDate: "2026-28-11"
+pubDate: "2026-11-28"
 draft: true
 tags: ["cnn", "vision transformer", "computer vision"]
 ---
