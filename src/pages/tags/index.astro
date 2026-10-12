@@ -2,8 +2,9 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TagBadge from '../../components/TagBadge.astro';
+import { isPostVisible } from '../../utils/posts';
 
-const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const allPosts = await getCollection('blog', isPostVisible);
 
 // Aggregate all tags with counts
 const tagCounts = allPosts.reduce<Record<string, number>>((acc, post) => {

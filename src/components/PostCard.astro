@@ -7,12 +7,13 @@ export interface Props {
       description: string;
       pubDate: Date;
       tags: string[];
+      draft?: boolean;
     };
   };
 }
 
 const { post } = Astro.props;
-const { title, description, pubDate, tags } = post.data;
+const { title, description, pubDate, tags, draft = false } = post.data;
 
 const formattedDate = pubDate.toLocaleDateString('vi-VN', {
   year: 'numeric',
@@ -42,6 +43,11 @@ const formattedDate = pubDate.toLocaleDateString('vi-VN', {
         <!-- Title -->
         <h2 class="text-base font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors mb-1.5 leading-snug">
           {title}
+          {draft && (
+            <span class="ml-2 align-middle rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wide text-amber-700 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+              Draft
+            </span>
+          )}
         </h2>
 
         <!-- Description -->

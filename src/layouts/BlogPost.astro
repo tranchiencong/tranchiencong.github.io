@@ -10,9 +10,10 @@ export interface Props {
   updatedDate?: Date;
   tags?: string[];
   minutesRead?: number;
+  draft?: boolean;
 }
 
-const { title, description, pubDate, updatedDate, tags = [], minutesRead } = Astro.props;
+const { title, description, pubDate, updatedDate, tags = [], minutesRead, draft = false } = Astro.props;
 
 const formattedDate = pubDate.toLocaleDateString('vi-VN', {
   year: 'numeric',
@@ -28,6 +29,11 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('vi-VN', {
 
 <BaseLayout {title} {description} {pubDate} {tags}>
   <article>
+    {draft && (
+      <aside class="mb-8 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+        <strong class="font-semibold">Bản nháp:</strong> Trang này chỉ hiển thị khi chạy môi trường phát triển và sẽ không được đưa lên production.
+      </aside>
+    )}
     <!-- Post Header -->
     <header class="mb-10 animate-fade-in">
       <!-- Tags -->

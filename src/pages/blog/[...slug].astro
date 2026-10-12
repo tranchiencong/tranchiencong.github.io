@@ -1,9 +1,10 @@
 ---
 import { getCollection, render } from 'astro:content';
 import BlogPost from '../../layouts/BlogPost.astro';
+import { isPostVisible } from '../../utils/posts';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  const posts = await getCollection('blog', isPostVisible);
   return posts.map(post => ({
     params: { slug: post.id },
     props: post,
@@ -25,6 +26,7 @@ const minutesRead = Math.ceil(wordCount / 200);
   updatedDate={post.data.updatedDate}
   tags={post.data.tags}
   minutesRead={minutesRead}
+  draft={post.data.draft}
 >
   <Content />
 </BlogPost>

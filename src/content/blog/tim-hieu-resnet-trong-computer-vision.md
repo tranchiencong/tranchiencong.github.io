@@ -1,7 +1,7 @@
 ---
-title: "Tìm hiểu ResNet: Vì sao kết nối tắt giúp huấn luyện CNN rất sâu?"
+title: "Tìm hiểu ResNet: Vì sao kết nối tắt giúp huấn luyện CNN sâu?"
 description: "Tìm hiểu bài toán degradation, residual learning, shortcut connection và cách các kiến trúc ResNet-18, ResNet-34, ResNet-50 hoạt động trong Computer Vision."
-pubDate: "2026-09-30"
+pubDate: "2026-10-01"
 tags: ["resnet", "cnn", "deep learning", "computer vision"]
 ---
 
