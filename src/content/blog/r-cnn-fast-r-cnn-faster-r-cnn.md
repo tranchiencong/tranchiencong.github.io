@@ -1,8 +1,8 @@
 ---
 title: "Từ R-CNN đến Faster R-CNN: Detector hai giai đoạn tiến hóa như thế nào?"
 description: "Phân tích R-CNN, Fast R-CNN và Faster R-CNN, từ region proposal thủ công đến Region Proposal Network dùng chung feature map."
-pubDate: "2026-10-20"
-draft: true
+pubDate: "2026-10-15"
+draft: false
 tags: ["r-cnn", "object detection", "computer vision"]
 ---
 
