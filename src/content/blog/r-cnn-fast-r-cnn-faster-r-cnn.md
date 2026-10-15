@@ -154,31 +154,8 @@ Tuy nhiên, latency phụ thuộc vào số proposal, backbone và implementatio
 
 Faster R-CNN vì vậy thường có NMS ở cả proposal stage và final detection stage. Khi benchmark latency, phải tính cả hai nếu mục tiêu là end-to-end deployment.
 
-## 11. Sai lầm khi đánh giá
 
-- So sánh FPS từ hai paper dùng GPU và batch size khác nhau.
-- Gán toàn bộ cải thiện cho kiến trúc dù backbone và augmentation khác nhau.
-- Tune NMS hoặc threshold trên test set.
-- Chỉ xem mAP tổng và bỏ qua small-object AP.
-- Dùng thuật ngữ “end-to-end” mà không nói proposal, NMS và preprocessing có nằm trong graph hay không.
-
-## 12. Failure modes và ablation
-
-| Failure mode | Nguyên nhân khả dĩ | Ablation rẻ |
-| --- | --- | --- |
-| Proposal recall thấp | Anchor/stride không phù hợp | Đo recall trước detection head |
-| Nhiều background FP | RPN/object head mất cân bằng | Kiểm tra score histogram, hard negatives |
-| Box lệch | Feature resolution thấp | So RoI level hoặc input size |
-| Training không ổn định | Loss scale, batch nhỏ, BN | Theo dõi từng loss và gradient norm |
-| Inference chậm | Quá nhiều proposals | Sweep số pre/post-NMS proposals |
-
-Đo proposal recall cô lập RPN khỏi detection head. Nếu RPN recall đã thấp, đổi classifier phía sau sẽ không giải quyết được bottleneck.
-
-## 13. Tái lập kết quả
-
-Cần ghi backbone và weights, FPN hay không, anchor configuration, số proposal trước/sau NMS, RoI operator, image resize policy và evaluator version. Hai model đều gọi là “Faster R-CNN ResNet-50” vẫn có thể khác đáng kể ở các chi tiết này.
-
-## 14. Tổng kết
+## 11. Tổng kết
 
 R-CNN đưa CNN vào pipeline region proposal. Fast R-CNN chia sẻ feature map cho mọi proposal. Faster R-CNN học proposal bằng RPN và chia sẻ backbone với detection head. Chuỗi tiến hóa này là một ví dụ tốt về nghiên cứu hệ thống: mỗi công trình xác định bottleneck thực nghiệm của công trình trước rồi loại bỏ nó.
 
