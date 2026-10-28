@@ -2,7 +2,7 @@
 title: "Transfer Learning với ResNet: Khi nào nên đóng băng hay fine-tune?"
 description: "Hướng dẫn tư duy sử dụng ResNet pretrained, phân biệt feature extraction và fine-tuning, đồng thời kiểm soát leakage và domain shift."
 pubDate: "2026-10-28"
-draft: true
+draft: false
 tags: ["transfer learning", "resnet", "computer vision"]
 ---
 
