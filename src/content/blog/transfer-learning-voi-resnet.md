@@ -1,189 +1,65 @@
 ---
-title: "Transfer Learning với ResNet: Khi nào nên đóng băng hay fine-tune?"
-description: "Hướng dẫn tư duy sử dụng ResNet pretrained, phân biệt feature extraction và fine-tuning, đồng thời kiểm soát leakage và domain shift."
+title: "Học chuyển giao với ResNet: Khi nào đóng băng, khi nào tinh chỉnh?"
+description: "Cách tận dụng ResNet đã huấn luyện, chọn mức tinh chỉnh phù hợp và đánh giá kết quả mà không để rò rỉ dữ liệu làm sai lệch kết luận."
 pubDate: "2026-10-28"
 draft: false
 tags: ["transfer learning", "resnet", "computer vision"]
 ---
 
-Huấn luyện một mô hình thị giác từ đầu thường cần nhiều dữ liệu, compute và thời gian. Transfer Learning tái sử dụng representation đã học từ source task để giải quyết target task mới. Với [ResNet](/blog/tim-hieu-resnet-trong-computer-vision/), ta thường thay classification head rồi huấn luyện trên dataset riêng.
+Giả sử bạn có vài nghìn ảnh lá cây và muốn nhận diện năm loại bệnh. Huấn luyện một mạng lớn từ đầu có thể tốn thời gian, trong khi dữ liệu chưa chắc đủ để mạng học được những đặc trưng thị giác cơ bản. Một cách khởi đầu hợp lý là lấy [ResNet đã huấn luyện trên ImageNet](/blog/tim-hieu-resnet-trong-computer-vision/), thay lớp phân loại cuối và dạy mô hình nhận diện năm loại bệnh đó.
 
-Nhưng “dùng pretrained model” không tự động bảo đảm kết quả tốt. Lợi ích phụ thuộc mức tương đồng giữa hai domain, lượng dữ liệu đích và protocol fine-tuning.
+Đó là **học chuyển giao**: tận dụng điều mô hình đã học từ một bài toán để giải bài toán mới. Câu hỏi khó hơn nằm ở bước tiếp theo. Ta nên giữ nguyên các lớp trích xuất đặc trưng, chỉ huấn luyện lớp phân loại mới, hay cho cả ResNet tiếp tục học từ ảnh lá cây? Bài viết này đi từ cách chọn chiến lược đến một ví dụ PyTorch và những phép kiểm tra cần có trước khi tin vào kết quả.
 
-![So sánh feature extraction và fine-tuning trong Transfer Learning](https://raw.githubusercontent.com/mrdbourke/tensorflow-deep-learning/main/images/05-transfer-learning-feature-extraction-vs-fine-tuning.png)
-*Feature extraction giữ cố định phần lớn encoder, còn fine-tuning cập nhật thêm các layer pretrained. Nguồn: [TensorFlow Deep Learning](https://github.com/mrdbourke/tensorflow-deep-learning).*
+## ResNet mang theo điều gì từ bài toán cũ?
 
-## 1. Source task và target task
+Một ResNet dùng để phân loại ảnh có thể nhìn thành hai phần: **thân mạng** biến ảnh thành đặc trưng và **lớp phân loại** biến đặc trưng thành điểm số cho từng lớp. Khi tải trọng số đã huấn luyện trên ImageNet, cả hai phần đều mang dấu vết của bài toán cũ. Ta thường thay lớp phân loại vì số lớp và ý nghĩa nhãn ở bài toán mới đã khác.
 
-Gọi encoder pretrained là:
+Các lớp đầu thường học những mẫu khá chung như cạnh, màu và kết cấu. Các lớp sâu hơn kết hợp chúng thành những đặc trưng gần với đối tượng cần phân loại. Tuy nhiên, “lớp đầu dùng được ở mọi nơi” không phải quy luật. Ảnh X-quang, ảnh vệ tinh hoặc ảnh hiển vi có cách tạo ảnh rất khác ảnh tự nhiên; ngay cả đặc trưng ở đầu mạng cũng có thể cần thích nghi. Nghiên cứu của [Yosinski và cộng sự](https://proceedings.neurips.cc/paper_files/paper/2014/hash/532a2f85b6977104bc93f8580abbb330-Abstract.html) cho thấy khả năng chuyển giao thường giảm khi hai bài toán cách xa nhau, nhưng đặc trưng chuyển từ bài toán cũ vẫn có thể hữu ích hơn đặc trưng khởi tạo ngẫu nhiên.
 
-$$
-\mathbf{z}=f_{\theta}(\mathbf{x}),
-$$
+Vì thế, số lượng ảnh không phải yếu tố duy nhất để quyết định cách huấn luyện. Ta còn phải xem ảnh mới giống ảnh dùng để huấn luyện ban đầu đến đâu, nhãn mới đòi hỏi những chi tiết nào, và kết quả trên tập kiểm định thay đổi ra sao.
 
-và head cho tác vụ mới là:
+## Ba mức độ thích nghi
 
-$$
-\hat{\mathbf{y}}=g_{\phi}(\mathbf{z}).
-$$
+Hãy hình dung thân mạng ResNet gồm các tầng liên tiếp, từ tầng xử lý ảnh ban đầu đến `layer4` gần lớp phân loại. Có ba cách dùng phổ biến:
 
-Ta khởi tạo $\theta$ từ source task và khởi tạo mới $\phi$. Hai chiến lược phổ biến khác nhau ở việc có cập nhật $\theta$ hay không.
+![So sánh cách giữ nguyên phần trích xuất đặc trưng và cách tinh chỉnh các tầng của mô hình](https://raw.githubusercontent.com/mrdbourke/tensorflow-deep-learning/main/images/05-transfer-learning-feature-extraction-vs-fine-tuning.png)
 
-Source và target có thể khác nhau trên nhiều trục:
+*Hai cách tận dụng mô hình đã huấn luyện: giữ nguyên phần trích xuất đặc trưng hoặc tiếp tục cập nhật một số tầng. Nguồn: [TensorFlow Deep Learning](https://github.com/mrdbourke/tensorflow-deep-learning).*
 
-- **Input distribution:** ảnh tự nhiên, X-quang, ảnh vệ tinh hoặc ảnh kính hiển vi.
-- **Label space:** 1.000 lớp ImageNet so với một số lớp chuyên ngành.
-- **Task:** classification, detection hay segmentation.
-- **Resolution và số channel:** ảnh RGB ba channel so với ảnh grayscale hoặc multispectral.
-- **Acquisition process:** camera, scanner, bệnh viện hoặc điều kiện ánh sáng khác nhau.
+**Chỉ huấn luyện lớp phân loại.** Ta đóng băng thân mạng và học lại lớp cuối. Cách này nhanh, ít tốn bộ nhớ và là phép thử đầu tiên tốt khi dữ liệu ít. Nếu nó đã cho kết quả ổn định, việc mở thêm hàng triệu tham số có thể không mang lại lợi ích đáng kể. Điểm yếu là những đặc trưng có sẵn không thể điều chỉnh theo ảnh mới.
 
-Khoảng cách này thường được gọi chung là **domain gap**. Không có một con số duy nhất đo domain gap hoàn hảo; nó phải được đánh giá bằng cả hiểu biết về quy trình tạo dữ liệu và bằng chứng transfer thực nghiệm.
+**Tinh chỉnh một phần.** Sau khi lớp phân loại đã học được tín hiệu ban đầu, ta mở `layer4` để các đặc trưng cấp cao thích nghi với nhãn mới. Nếu kết quả kiểm định còn cải thiện, có thể thử mở thêm `layer3`. Thứ tự này là điểm khởi đầu thực dụng, không phải công thức đúng cho mọi bộ dữ liệu.
 
-## 2. Ba chế độ huấn luyện cần phân biệt
+**Tinh chỉnh toàn bộ.** Mọi tầng của ResNet đều được cập nhật. Cách này cho mô hình nhiều khả năng thích nghi nhất, nhưng cũng tốn tài nguyên hơn và dễ khớp quá sát dữ liệu huấn luyện khi tập ảnh nhỏ. Trọng số đã học có thể bị thay đổi quá mạnh nếu tốc độ học đặt quá lớn.
 
-| Chế độ | Encoder | Head mới | Chi phí | Khi nên dùng làm baseline |
-| --- | --- | --- | --- | --- |
-| Linear probe/feature extraction | Đóng băng | Huấn luyện | Thấp | Dataset nhỏ, kiểm tra nhanh chất lượng representation |
-| Partial fine-tuning | Mở một số stage cuối | Huấn luyện | Trung bình | Cần thích nghi semantic cấp cao |
-| Full fine-tuning | Cập nhật toàn bộ | Huấn luyện | Cao | Có đủ dữ liệu và cần thích nghi mạnh |
+Một lộ trình hợp lý là bắt đầu từ cách đơn giản nhất, rồi chỉ mở thêm tầng khi kết quả trên tập kiểm định cho thấy lợi ích rõ ràng. Khi so sánh, cần dùng cùng cách chia dữ liệu, cách xử lý ảnh và ngân sách thử nghiệm tương đương; nếu một phương án được chỉnh tham số kỹ hơn hẳn, phép so sánh sẽ thiếu công bằng.
 
-Ba chế độ này phải được so sánh dưới cùng split và evaluation protocol. Nếu full fine-tuning được tune kỹ hơn feature extraction, kết luận về chiến lược sẽ bị lẫn với chênh lệch tuning budget.
+## Thử với ResNet-50 trong PyTorch
 
-## 3. Feature extraction
-
-Trong feature extraction, encoder bị đóng băng:
-
-$$
-\theta \leftarrow \theta_{\mathrm{pretrained}},\qquad
-\nabla_{\theta}L=0.
-$$
-
-Chỉ head mới được huấn luyện. Cách này nhanh, ít tốn memory và giảm số tham số cần ước lượng. Nó là baseline tốt khi dataset nhỏ hoặc domain gần dữ liệu pretraining.
-
-Điểm yếu là representation không thích nghi. Nếu target là ảnh X-quang, ảnh vệ tinh hoặc ảnh công nghiệp khác xa ảnh tự nhiên, feature cố định có thể bỏ qua tín hiệu quan trọng.
-
-Feature extraction cũng là phép kiểm tra rẻ cho checkpoint. Nếu linear head không vượt được baseline đơn giản, mở toàn bộ encoder ngay lập tức chưa chắc là lựa chọn tốt; trước hết nên kiểm tra preprocessing, label noise và domain gap.
-
-## 4. Fine-tuning
-
-Fine-tuning cập nhật một phần hoặc toàn bộ encoder. Learning rate cho backbone thường nhỏ hơn head:
-
-$$
-\eta_{\mathrm{backbone}} < \eta_{\mathrm{head}}.
-$$
-
-Có thể unfreeze dần từ stage cuối về stage đầu. Đây là heuristic, không phải quy luật. Lựa chọn cần được kiểm chứng trên validation set dưới cùng compute budget.
-
-Fine-tuning có khả năng thích nghi cao hơn nhưng tăng nguy cơ overfitting hoặc làm mất representation hữu ích nếu learning rate quá lớn.
-
-### Partial fine-tuning
-
-Với ResNet, ta có thể chỉ mở `layer4`, rồi lần lượt `layer3`, `layer2`. Stage cuối thường gần task-specific representation hơn, nên đây là thứ tự thử nghiệm hợp lý. Tuy nhiên, đây vẫn chỉ là heuristic.
-
-### Full fine-tuning
-
-Toàn bộ model nhận gradient. Full fine-tuning cho flexibility cao nhất nhưng cần regularization, scheduler và checkpoint selection cẩn thận. Nếu target dataset rất nhỏ, số tham số hiệu dụng lớn có thể làm variance giữa các seed tăng mạnh.
-
-### Discriminative learning rate
-
-Một optimizer có thể dùng nhiều parameter group:
-
-$$
-\eta_{\mathrm{early}}
-<
-\eta_{\mathrm{late}}
-<
-\eta_{\mathrm{head}}.
-$$
-
-Layer đầu thay đổi chậm để giữ feature tổng quát; head học nhanh vì được khởi tạo mới. Tỷ lệ giữa các learning rate phải được xem là hyperparameter, không phải hằng số phổ quát.
-
-## 5. Các tầng có mức transferability khác nhau
-
-Nghiên cứu của Yosinski và cộng sự cho thấy các layer đầu thường học feature tổng quát hơn, trong khi layer cao chuyên biệt hơn với source task. Transferability giảm khi source và target xa nhau.
-
-Không nên biến điều này thành khẩu hiệu “layer đầu luôn universal”. Dữ liệu y tế, multispectral hoặc microscopy có thống kê đầu vào khác đáng kể; ngay cả stem convolution cũng có thể cần thích nghi.
-
-Kornblith và cộng sự quan sát mối liên hệ mạnh giữa ImageNet accuracy và transfer accuracy trong nhiều thiết lập classification họ khảo sát. Nhưng kết quả đó không chứng minh ImageNet accuracy luôn dự đoán tốt transfer tới mọi domain hoặc dense task. Khi source–target khác xa, lựa chọn pretraining objective và dữ liệu có thể quan trọng hơn vài điểm accuracy trên source benchmark.
-
-## 6. Preprocessing phải khớp với checkpoint
-
-Pretrained weights được học dưới một pipeline cụ thể: color space, resize, crop, interpolation và normalization. Thay pipeline mà không kiểm tra có thể làm feature distribution lệch ngay từ input.
-
-TorchVision gắn preprocessing vào weight enum. Ví dụ `ResNet50_Weights.IMAGENET1K_V2.transforms()` trả về inference transform tương ứng. Khi cần training augmentation, ta có thể thay random crop/flip nhưng vẫn phải duy trì normalization đúng với checkpoint.
-
-Với ảnh grayscale có ba lựa chọn thường gặp:
-
-1. Lặp một channel thành ba channel để giữ nguyên stem pretrained.
-2. Thay convolution đầu vào thành một channel và khởi tạo từ trung bình weight RGB.
-3. Thay stem và học lại từ đầu.
-
-Không có lựa chọn nào mặc định thắng. Chúng làm thay đổi lượng kiến thức thực sự được transfer và cần được ablate nếu đóng góp nghiên cứu phụ thuộc vào chúng.
-
-## 7. Batch Normalization là trường hợp đặc biệt
-
-Đặt parameter ở trạng thái không nhận gradient chưa chắc đã cố định running mean và variance. Trong training mode, BatchNorm có thể tiếp tục cập nhật statistics.
-
-Vì vậy cần quyết định rõ:
-
-- Freeze cả affine parameters và running statistics.
-- Cập nhật statistics nhưng giữ weight/bias.
-- Fine-tune toàn bộ BatchNorm.
-- Thay normalization nếu batch quá nhỏ.
-
-Sai khác này có thể làm kết quả thay đổi dù code đều được mô tả là “freeze backbone”.
-
-Trong PyTorch, đặt `requires_grad=False` chỉ ngăn gradient cập nhật affine parameters; nó không tự ngăn running statistics thay đổi khi module ở training mode. Nếu muốn cố định BatchNorm, cần đưa các module này về `eval()` sau mỗi lần gọi `model.train()`:
-
-```python
-from torch import nn
-
-
-def freeze_batch_norm_statistics(model: nn.Module) -> None:
-    for module in model.modules():
-        if isinstance(module, nn.BatchNorm2d):
-            module.eval()
-```
-
-Với batch nhỏ, running statistics nhiễu có thể làm validation dao động. Nhưng dùng frozen statistics từ ImageNet cũng có thể không phù hợp domain mới. Đây là một quyết định thực nghiệm cần báo cáo.
-
-## 8. Cài đặt feature extraction bằng PyTorch
-
-Ví dụ dưới đây dùng weight enum cụ thể thay vì `DEFAULT`. Alias `DEFAULT` có thể trỏ tới weight khác khi thư viện cập nhật, còn `IMAGENET1K_V2` mô tả checkpoint xác định rõ hơn.
+TorchVision cung cấp các bộ trọng số gắn với cách xử lý ảnh tương ứng. Trong ví dụ dưới đây, `IMAGENET1K_V2` chỉ rõ phiên bản trọng số được dùng; `trong_so.transforms()` tạo phép biến đổi phù hợp cho ảnh kiểm định và ảnh dự đoán. Ảnh tăng cường khi huấn luyện có thể dùng cách cắt, lật khác, nhưng vẫn cần chuẩn hóa đầu vào phù hợp với bộ trọng số đã chọn.
 
 ```python
 from torch import nn
 from torch.optim import AdamW
-from torchvision.models import resnet50, ResNet50_Weights
+from torchvision.models import ResNet50_Weights, resnet50
 
+so_lop = 5
+trong_so = ResNet50_Weights.IMAGENET1K_V2
+model = resnet50(weights=trong_so)
 
-num_classes = 5
-weights = ResNet50_Weights.IMAGENET1K_V2
-model = resnet50(weights=weights)
+for tham_so in model.parameters():
+    tham_so.requires_grad = False
 
-# Đóng băng toàn bộ backbone trước khi thay head.
-for parameter in model.parameters():
-    parameter.requires_grad = False
-
-in_features = model.fc.in_features
-model.fc = nn.Linear(in_features, num_classes)
-
-# Chỉ head mới được optimizer cập nhật.
-optimizer = AdamW(
-    model.fc.parameters(),
-    lr=1e-3,
-    weight_decay=1e-4,
-)
-
-# Transform xác định đi cùng checkpoint cho validation/inference.
-validation_transform = weights.transforms()
+model.fc = nn.Linear(model.fc.in_features, so_lop)
+optimizer = AdamW(model.fc.parameters(), lr=1e-3, weight_decay=1e-4)
+phep_bien_doi_kiem_dinh = trong_so.transforms()
 ```
 
-Sau khi head hội tụ, có thể mở `layer4` và dùng hai learning rate:
+Đoạn mã mới chuẩn bị mô hình và bộ tối ưu; nó chưa bao gồm vòng lặp huấn luyện, cách đọc dữ liệu hay phép đánh giá. Sau khi lớp phân loại đã ổn định, ta có thể mở tầng cuối và đặt tốc độ học cho tầng này thấp hơn lớp phân loại mới:
 
 ```python
-for parameter in model.layer4.parameters():
-    parameter.requires_grad = True
+for tham_so in model.layer4.parameters():
+    tham_so.requires_grad = True
 
 optimizer = AdamW(
     [
@@ -194,150 +70,47 @@ optimizer = AdamW(
 )
 ```
 
-Các giá trị learning rate chỉ là điểm khởi đầu. Chúng không thay thế quá trình tuning có validation protocol rõ ràng.
+Hai tốc độ học trên chỉ là giá trị để bắt đầu thử nghiệm. Khi mở thêm tầng, hãy theo dõi sai số trên cả tập huấn luyện và tập kiểm định. Nếu sai số huấn luyện tiếp tục giảm nhưng kết quả kiểm định xấu đi, việc mở thêm tầng có thể đang làm mô hình học quá sát dữ liệu sẵn có.
 
-![Kết quả phân loại kiến và ong bằng ResNet18 sau Transfer Learning](https://docs.pytorch.org/tutorials/_images/sphx_glr_transfer_learning_tutorial_002.png)
-*Dự đoán trên validation images trong tutorial Transfer Learning chính thức. Nguồn: [PyTorch Tutorials](https://docs.pytorch.org/tutorials/beginner/transfer_learning_tutorial.html).*
+Có một chi tiết dễ bỏ sót: **đóng băng tham số không đồng nghĩa đóng băng lớp chuẩn hóa theo lô (Batch Normalization)**. `requires_grad = False` ngăn cập nhật trọng số và độ lệch, nhưng các thống kê trung bình và phương sai vẫn có thể thay đổi khi mô hình ở chế độ huấn luyện. Nếu muốn giữ nguyên chúng, sau mỗi lần gọi `model.train()` trong vòng lặp huấn luyện, hãy đặt các lớp chuẩn hóa theo lô về chế độ đánh giá:
 
-## 9. Pipeline thực nghiệm được khuyến nghị
+```python
+def co_dinh_thong_ke_batch_norm(model: nn.Module) -> None:
+    for lop in model.modules():
+        if isinstance(lop, nn.BatchNorm2d):
+            lop.eval()
 
-### Giai đoạn 1: baseline rẻ
+# Gọi hai dòng này ở đầu mỗi lượt huấn luyện.
+model.train()
+co_dinh_thong_ke_batch_norm(model)
+```
 
-1. Khởi tạo ResNet pretrained.
-2. Thay classification head.
-3. Freeze encoder.
-4. Tune learning rate và regularization trên validation set.
+Việc giữ thống kê cũ cũng không luôn tốt hơn: với ảnh rất khác ImageNet, chúng có thể không còn phù hợp. Hãy ghi rõ lựa chọn này và kiểm tra trên tập kiểm định, nhất là khi mỗi lần huấn luyện chỉ có ít ảnh. Tài liệu [PyTorch về BatchNorm2d](https://docs.pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html) mô tả sự khác biệt giữa chế độ huấn luyện và đánh giá.
 
-### Giai đoạn 2: fine-tuning có kiểm soát
+## Đánh giá sao cho kết quả đáng tin
 
-1. Unfreeze stage cuối.
-2. Dùng discriminative learning rates.
-3. Theo dõi training/validation loss và calibration.
-4. Chỉ unfreeze thêm nếu validation evidence ủng hộ.
+Trước khi so sánh các mức tinh chỉnh, hãy chia dữ liệu theo **đơn vị độc lập thực sự**. Nếu nhiều ảnh lá đến từ cùng một cây, việc đưa ảnh của cây đó vào cả tập huấn luyện và tập kiểm tra có thể làm kết quả lạc quan quá mức. Với ảnh y tế, đơn vị chia thường là bệnh nhân; với video, các khung hình gần nhau cần ở cùng một phía của phép chia. Tập kiểm định dùng để chọn tốc độ học, số tầng mở và thời điểm dừng. Tập kiểm tra chỉ nên dùng để đánh giá phương án đã chọn.
 
-### Giai đoạn 3: đối chứng
+Tiếp theo, hãy so sánh ít nhất ba mốc: ResNet khởi tạo ngẫu nhiên, ResNet chỉ học lớp phân loại và ResNet được tinh chỉnh. Giữ cách chia dữ liệu, cách tăng cường ảnh và công sức chỉnh tham số tương đương. Nếu bản đã huấn luyện trước thắng bản khởi tạo ngẫu nhiên, ta mới có bằng chứng rằng việc chuyển giao đã giúp ích trong thiết lập này. Với dữ liệu nhỏ, nên lặp lại thí nghiệm ở vài hạt giống ngẫu nhiên để xem kết quả có ổn định không.
 
-So sánh với cùng kiến trúc huấn luyện từ random initialization. Nếu không có baseline này, chưa thể biết lợi ích đến từ transfer hay chỉ từ kiến trúc và augmentation.
+Chỉ số đánh giá cần theo mục tiêu sử dụng. Tỷ lệ dự đoán đúng có thể đủ khi các lớp cân bằng; nếu bệnh hiếm hoặc bỏ sót một lớp gây hậu quả lớn, hãy xem thêm khả năng nhận diện từng lớp, độ chính xác trên các dự đoán dương tính và ma trận nhầm lẫn. Một con số tổng hợp không cho biết mô hình đang sai ở đâu.
 
-### Giai đoạn 4: kiểm tra độ bền
+Cuối cùng, nếu mô hình đã huấn luyện trước cho kết quả kém bất thường, hãy kiểm tra phép chuẩn hóa ảnh, thứ tự kênh màu, độ phân giải và cách chia dữ liệu trước khi kết luận rằng học chuyển giao không phù hợp. Với ảnh một kênh, việc lặp kênh thành ba kênh hoặc thay lớp tích chập đầu là hai lựa chọn khác nhau; cả hai đều cần được kiểm chứng thay vì mặc định tương đương.
 
-1. Lặp lại trên nhiều seed.
-2. Báo mean và độ phân tán.
-3. Đánh giá theo subgroup hoặc source site.
-4. Kiểm tra calibration và confidence distribution.
-5. Nếu có temporal hoặc geographic shift, dùng external test set phù hợp.
+## Khi nào nên dừng tinh chỉnh?
 
-Một experiment matrix tối thiểu có thể là:
+Nếu chỉ huấn luyện lớp phân loại đã đạt mục tiêu và mở thêm tầng không cải thiện kết quả kiểm định, có thể dừng ở mô hình đơn giản hơn. Nếu mở `layer4` giúp ích nhưng mở toàn bộ làm kết quả dao động mạnh giữa các lần chạy, tinh chỉnh một phần là lựa chọn có cơ sở hơn. Ngược lại, khi ảnh mới khác xa ImageNet và có đủ dữ liệu, tinh chỉnh sâu hơn đáng để thử.
 
-| Khởi tạo | Trainable layers | Mục đích |
-| --- | --- | --- |
-| Random | Toàn bộ | Baseline không transfer |
-| Pretrained | Head | Đo chất lượng feature cố định |
-| Pretrained | `layer4` + head | Đo lợi ích thích nghi một phần |
-| Pretrained | Toàn bộ | Đo full fine-tuning |
+Đôi khi ResNet khởi tạo ngẫu nhiên lại cho kết quả tốt hơn. Đó là dấu hiệu cần xem lại mức tương đồng giữa hai bộ dữ liệu, cách xử lý ảnh và quy trình huấn luyện. Học chuyển giao là một giả thuyết có thể kiểm tra bằng thực nghiệm, không phải lời bảo đảm rằng mô hình đã huấn luyện trước sẽ luôn thắng.
 
-Giữ augmentation và optimization budget tương đương giúp tách ảnh hưởng của initialization khỏi các yếu tố khác.
-
-## 10. Leakage trong transfer learning
-
-Các rủi ro phổ biến:
-
-- Một subject xuất hiện ở cả train và test qua nhiều ảnh.
-- Pretraining dataset có ảnh trùng target test set.
-- Chọn checkpoint dựa trên test performance.
-- Fit normalization hoặc augmentation policy trên toàn dataset.
-- Dùng test set để quyết định số layer unfreeze.
-
-Trong ảnh y tế, split theo ảnh thay vì bệnh nhân có thể tạo kết quả rất lạc quan. Trong video, các frame gần nhau phải được nhóm trước khi chia split.
-
-### Pretraining contamination
-
-Với checkpoint công khai, đôi khi không thể chứng minh hoàn toàn source dataset không chứa near-duplicate của target test set. Ít nhất cần ghi rõ source dataset được công bố và kiểm tra duplicate trong dữ liệu do mình kiểm soát. Nếu target benchmark phổ biến xuất hiện trên Internet, contamination risk phải được thảo luận thay vì mặc định bằng không.
-
-### Model selection leakage
-
-Test set chỉ dành cho đánh giá cuối. Số epoch, layer được unfreeze, threshold và checkpoint đều phải chọn bằng train/validation. Xem test score nhiều lần rồi sửa pipeline là một dạng thích nghi với test set dù không backpropagate trực tiếp trên nó.
-
-## 11. Khi pretraining có thể không giúp
-
-Transfer có thể yếu hoặc gây negative transfer khi:
-
-- Source và target domain rất khác.
-- Target dataset đủ lớn để học từ đầu.
-- Resolution hoặc số channel khác biệt mạnh.
-- Nhãn source khuyến khích feature không liên quan.
-- Training recipe từ đầu tốt hơn baseline yếu được chọn.
-
-Do đó, “pretrained tốt hơn random initialization” là giả thuyết thực nghiệm, không phải fact áp dụng cho mọi dataset.
-
-### Cheap falsification test
-
-Trước khi chạy full fine-tuning tốn kém:
-
-1. Trích feature cố định cho train và validation.
-2. Huấn luyện linear classifier.
-3. So với handcrafted/simple baseline và random encoder.
-4. Vẽ learning curve theo 10%, 25%, 50% và 100% nhãn.
-
-Nếu pretrained feature không mang lại lợi ích ở bất kỳ data regime nào, cần kiểm tra preprocessing và domain gap trước khi tăng compute. Nếu chỉ có lợi ở low-data regime, contribution phù hợp có thể là data efficiency chứ không phải final accuracy.
-
-## 12. Metric nào phù hợp?
-
-Accuracy phù hợp với lớp cân bằng và cost tương đương. Với imbalance hoặc quyết định rủi ro cao, cần thêm:
-
-- Macro F1 hoặc balanced accuracy.
-- Per-class sensitivity và specificity.
-- AUROC và precision–recall curve.
-- Expected Calibration Error hoặc Brier score.
-- Confidence interval trên đơn vị độc lập.
-
-Một pretrained model có thể tăng accuracy nhưng calibration xấu hơn. Nếu confidence được dùng để từ chối mẫu hoặc ưu tiên kiểm tra thủ công, calibration là phần của mục tiêu chứ không phải phân tích phụ.
-
-## 13. Cần báo cáo gì để tái lập?
-
-- Tên và nguồn checkpoint.
-- Phiên bản library và preprocessing gắn với weights.
-- Layer nào được freeze/unfreeze.
-- Trạng thái BatchNorm.
-- Learning rate cho từng parameter group.
-- Split, seed và early-stopping rule.
-- Augmentation, resolution và class weighting.
-- Hardware và mixed precision.
-
-Ngoài ra nên lưu:
-
-- Hash hoặc tên chính xác của weights, ví dụ `IMAGENET1K_V2`.
-- Best-checkpoint criterion.
-- Số lần thử hyperparameter.
-- Training time và peak memory.
-- Kết quả từng seed, không chỉ seed tốt nhất.
-
-## 14. Các failure mode thường gặp
-
-| Failure mode | Dấu hiệu | Cách kiểm tra |
-| --- | --- | --- |
-| Learning rate backbone quá lớn | Validation giảm ngay khi unfreeze | So gradient norm và thử LR nhỏ hơn |
-| Head overfit | Train tốt, validation kém khi encoder frozen | Regularization, augmentation, learning curve |
-| BatchNorm lệch domain | Train/validation thay đổi mạnh giữa `train()` và `eval()` | Ablate BN frozen và cập nhật statistics |
-| Sai preprocessing | Pretrained baseline bất thường thấp | Dùng transform gắn với weight enum |
-| Split leakage | Validation gần hoàn hảo nhưng external test kém | Group split theo subject/scene |
-| Negative transfer | Random initialization tốt hơn ổn định | So nhiều seed và cùng training budget |
-
-Failure analysis nên được thực hiện trước khi đổi sang kiến trúc phức tạp hơn. Nhiều lỗi transfer learning đến từ pipeline chứ không phải thiếu capacity.
-
-## 15. Tổng kết
-
-Feature extraction rẻ và là baseline hợp lý; fine-tuning linh hoạt hơn nhưng phải kiểm soát optimization và overfitting. Chiến lược tốt nhất không được quyết định chỉ bằng kích thước dataset mà còn bởi domain gap, metric mục tiêu và compute budget.
-
-Sau classification và detection, chuỗi bài chuyển sang dự đoán theo pixel: [Semantic, Instance và Panoptic Segmentation](/blog/semantic-instance-panoptic-segmentation/).
+Điểm cần nhớ là: **đóng băng để có mốc so sánh nhanh, mở thêm tầng khi có bằng chứng cải thiện, và chỉ tin vào kết quả khi phép đánh giá không bị rò rỉ dữ liệu**. Từ một thân mạng ResNet dùng cho phân loại, ta cũng có thể đi tiếp sang bài toán dự đoán theo từng điểm ảnh trong [phân đoạn ngữ nghĩa, phân đoạn đối tượng và phân đoạn toàn cảnh](/blog/semantic-instance-panoptic-segmentation/).
 
 ---
 
-### Nguồn tham khảo
+### Tài liệu tham khảo
 
-[1] J. Yosinski et al., [*How Transferable Are Features in Deep Neural Networks?*](https://proceedings.neurips.cc/paper_files/paper/2014/hash/532a2f85b6977104bc93f8580abbb330-Abstract.html), NeurIPS 2014.
+[1] J. Yosinski và cộng sự, [*How Transferable Are Features in Deep Neural Networks?*](https://proceedings.neurips.cc/paper_files/paper/2014/hash/532a2f85b6977104bc93f8580abbb330-Abstract.html), NeurIPS 2014.
 
-[2] A. Kornblith, J. Shlens, and Q. V. Le, [*Do Better ImageNet Models Transfer Better?*](https://openaccess.thecvf.com/content_CVPR_2019/html/Kornblith_Do_Better_ImageNet_Models_Transfer_Better_CVPR_2019_paper.html), CVPR 2019.
+[2] [Hướng dẫn học chuyển giao cho thị giác máy tính](https://docs.pytorch.org/tutorials/beginner/transfer_learning_tutorial.html), PyTorch Tutorials.
 
-[3] K. He et al., [*Deep Residual Learning for Image Recognition*](https://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html), CVPR 2016.
-
+[3] [Tài liệu về mô hình và trọng số đã huấn luyện](https://docs.pytorch.org/vision/stable/models.html), TorchVision.
