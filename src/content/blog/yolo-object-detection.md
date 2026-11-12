@@ -1,5 +1,5 @@
 ---
-title: "YOLO: Nhìn phát lần, biết hết"
+title: "YOLO: Nhìn một phát, biết hết"
 description: "Giải thích tư duy cốt lõi của YOLO — từ ý tưởng chia lưới, dự đoán khung bao, độ tin cậy, đến hàm mất mát, triệt tiêu không cực đại và cách đánh giá bộ phát hiện công bằng."
 pubDate: "2026-11-12"
 draft: false
